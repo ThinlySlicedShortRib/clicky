@@ -605,6 +605,11 @@ final class FollowAlongLessonRunner {
                 if secondOpinion?.state == "passed" {
                     return await finishPassedStep(evidence: secondOpinion?.evidence)
                 }
+                // Models can misread a small screen, so a beginner who really
+                // did it must never be left waiting in silence.
+                emit("stuck_hint_spoken", ["stepIdentifier": step.id])
+                await waitForSpeechToFinish()
+                await presenter.speak("i can't quite tell if that worked. if it looks right to you, say skip and we'll keep going.")
                 continue
             }
 

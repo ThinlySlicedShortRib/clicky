@@ -94,7 +94,8 @@ fixes = {
 }
 for permission in report.get("missingPermissions", []):
     print(f"  - {permission}: {fixes.get(permission, permission)}")
-print(f"\n  App: {report.get(\"bundlePath\")}")
+print()
+print("  App:", report.get("bundlePath"))
 ' "$permission_report" || echo "$permission_report"
     echo
     # --check only reports, so it can run without anyone at the machine.

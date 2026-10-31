@@ -310,6 +310,9 @@ class Rehearsal:
         elif name == "step_already_done":
             print(f"  already done, clicky says: {event.get('spokenLine')}")
 
+        elif name == "stuck_hint_spoken":
+            print("  clicky says it can't tell, and offers skip")
+
         elif name in ("target_located", "screen_change_gated_through", "voice_command", "lesson_started", "lesson_finished"):
             pass
 
@@ -412,6 +415,8 @@ def write_transcript(rehearsal, evidence_directory, app_result, ground_truth):
             lines.append(f"- {time_label} check by {usage.get('model')}: `{event['state']}`, {event.get('evidence')} (${usage.get('costInUSD')} est)")
         elif name == "location_reused":
             lines.append(f"- {time_label} location reused from cache, no model call")
+        elif name == "stuck_hint_spoken":
+            lines.append(f"- {time_label} **clicky says:** it can't tell whether that worked, and offers skip")
         elif name == "step_already_done":
             lines.append(f"- {time_label} **already done, clicky says:** {event.get('spokenLine') or 'you have already got this one'}")
         elif name == "step_passed":
