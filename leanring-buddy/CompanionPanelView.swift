@@ -58,6 +58,14 @@ struct CompanionPanelView: View {
             //         .padding(.horizontal, 16)
             // }
 
+            if companionManager.hasCompletedOnboarding {
+                Spacer()
+                    .frame(height: 12)
+
+                followAlongButton
+                    .padding(.horizontal, 16)
+            }
+
             if companionManager.hasCompletedOnboarding && companionManager.allPermissionsGranted {
                 Spacer()
                     .frame(height: 16)
@@ -636,6 +644,43 @@ struct CompanionPanelView: View {
                     RoundedRectangle(cornerRadius: 5, style: .continuous)
                         .fill(isSelected ? Color.white.opacity(0.1) : Color.clear)
                 )
+        }
+        .buttonStyle(.plain)
+        .pointerCursor()
+    }
+
+    // MARK: - Follow Along
+
+    private var followAlongButton: some View {
+        Button(action: {
+            companionManager.followAlongCoordinator.showPasteSurface()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "play.rectangle.fill")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DS.Colors.overlayCursorBlue)
+
+                Text("follow along with a tutorial")
+                    .font(.system(size: 12, weight: .semibold))
+
+                Spacer()
+
+                Text("⌘⇧Y")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(DS.Colors.textTertiary)
+            }
+            .foregroundColor(DS.Colors.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: DS.CornerRadius.medium, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.CornerRadius.medium, style: .continuous)
+                    .stroke(DS.Colors.borderSubtle, lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
         .pointerCursor()

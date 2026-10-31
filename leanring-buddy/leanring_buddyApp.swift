@@ -68,9 +68,36 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         if !companionManager.hasCompletedOnboarding || !companionManager.allPermissionsGranted {
             menuBarPanelManager?.showPanelOnLaunch()
         }
+
+        companionManager.followAlongCoordinator.installHotKey()
+        startFollowAlongFromLaunchArgumentsIfRequested()
+
         // Not calling registerAsLoginItemIfNeeded(): it would make a dev build
         // in a scratch checkout start on every login.
         // startSparkleUpdater()
+    }
+
+    /// Lets scripts/demo-follow-along.sh go straight to a lesson, or to the paste
+    /// surface. These are not headless commands: they run the real demo path,
+    /// with real capture, the menu bar icon and the push-to-talk monitor.
+    private func startFollowAlongFromLaunchArgumentsIfRequested() {
+        let launchArguments = CommandLine.arguments
+
+        if launchArguments.contains("--follow-along-paste") {
+            companionManager.followAlongCoordinator.showPasteSurface()
+            return
+        }
+
+        guard let flagIndex = launchArguments.firstIndex(of: "--follow-along"),
+              flagIndex + 1 < launchArguments.count else {
+            return
+        }
+
+        guard let videoIdentifier = FollowAlongYouTubeLink.videoIdentifier(from: launchArguments[flagIndex + 1]) else {
+            print("⚠️ Follow Along: \(launchArguments[flagIndex + 1]) isn't a YouTube link")
+            return
+        }
+        companionManager.followAlongCoordinator.startLesson(videoIdentifier: videoIdentifier)
     }
 
     func applicationWillTerminate(_ notification: Notification) {

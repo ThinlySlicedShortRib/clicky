@@ -21,6 +21,7 @@ macOS menu bar companion app. Lives entirely in the macOS status bar (no dock ic
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
+- **Follow Along**: Paste a YouTube tutorial and the cursor teaches it live in the real app. Lessons are generated once and cached in Application Support. A free local screen comparison decides when a model call is worth making. See `docs/demo/follow-along/DEMO.md`
 - **Analytics**: None. `ClickyAnalytics.swift` is a no-op seam; PostHog was removed
 
 ### API Proxy (Cloudflare Worker, unused here)
@@ -53,7 +54,7 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | File | Lines | Purpose |
 |------|-------|---------|
 | `leanring_buddyApp.swift` | ~89 | Menu bar app entry point. Uses `@NSApplicationDelegateAdaptor` with `CompanionAppDelegate` which creates `MenuBarPanelManager` and starts `CompanionManager`. No main window — the app lives entirely in the status bar. |
-| `CompanionManager.swift` | ~1057 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
+| `CompanionManager.swift` | ~1160 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
 | `MenuBarPanelManager.swift` | ~243 | NSStatusItem + custom NSPanel lifecycle. Creates the menu bar icon, manages the floating companion panel (show/hide/position), installs click-outside-to-dismiss monitor. |
 | `CompanionPanelView.swift` | ~761 | SwiftUI panel content for the menu bar dropdown. Shows companion status, push-to-talk instructions, model picker (Sonnet/Opus), permissions UI, DM feedback button, and quit button. Dark aesthetic using `DS` design system. |
 | `OverlayWindow.swift` | ~881 | Full-screen transparent overlay hosting the blue cursor, response text, waveform, and spinner. Handles cursor animation, element pointing with bezier arcs, multi-monitor coordinate mapping, and fade-out transitions. |
@@ -70,7 +71,14 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `CLIBrains.swift` | ~550 | `ClaudeCLIBrain` and `CodexCLIBrain`, plus the subprocess runner with streaming stdout, cancellation, and timeouts. |
 | `SayTTSClient.swift` | ~155 | `CompanionTextToSpeechClient` seam and the `say`-based client. Picks the best installed English voice. Interruptible. |
 | `ScreenshotCoordinateMapper.swift` | ~100 | Single source of truth for mapping screenshot pixels to display points and global AppKit coordinates, and for picking the target screen. |
-| `HeadlessCommandRunner.swift` | ~1040 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `HeadlessCommandRunner.swift` | ~1300 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `FollowAlongLesson.swift` | ~190 | Saved lesson format, Application Support paths, and YouTube link parsing. The link parser rebuilds every URL from the video id. |
+| `FollowAlongTutorialImporter.swift` | ~600 | Paste to lesson: yt-dlp fetches details, transcript and video, the Brain drafts steps from the transcript, ffmpeg pulls only those moments, and the Brain finishes the lesson from the frames. Runs once per video. |
+| `FollowAlongLessonRunner.swift` | ~1150 | Teaches a lesson: locate, fly, speak, then wait for a screenshot to show success. Holds the local change gate, location cache, voice routing, interface adaptation and off-track recovery. |
+| `FollowAlongCostMeter.swift` | ~160 | Adds up real `BrainUsage` values and estimates the naive comparison. A nil cost makes the total "not reported". |
+| `FollowAlongCoordinator.swift` | ~360 | One session from paste to end card, model choice (`claude-haiku-5-5` for success checks), the real screen source, the presenter, run logs, and the command+shift+Y hot key. |
+| `FollowAlongViews.swift` | ~460 | Paste pill, live meter, end card, and their non-activating panels. |
+| `FollowAlongRehearsal.swift` | ~150 | TEST ONLY. Blender bridge screen source, muted presenter and scripted voice feed. Reachable only from `--headless-follow-along-rehearsal`, never from the demo path. |
 | `ClaudeAPI.swift` | ~291 | Unused here. Claude vision API client with streaming (SSE) and non-streaming modes. |
 | `OpenAIAPI.swift` | ~142 | OpenAI GPT vision API client. |
 | `ElevenLabsTTSClient.swift` | ~81 | Unused here, but conforms to `CompanionTextToSpeechClient`. Sends text to the Worker proxy, plays back audio via `AVAudioPlayer`. |
@@ -87,6 +95,8 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 scripts/build-and-run.sh               # build, sign, relaunch
 scripts/build-and-run.sh --build-only  # build and sign only
 scripts/headless.sh --headless-self-test
+scripts/demo-follow-along.sh           # Follow Along: preflight, Blender, lesson
+scripts/with-gui-lock.sh <command>     # hold the shared GUI lock around a command
 
 # Known non-blocking warnings: Swift 6 concurrency warnings,
 # deprecated onChange warning in OverlayWindow.swift. Do NOT attempt to fix these.
@@ -95,6 +105,8 @@ scripts/headless.sh --headless-self-test
 Build through `scripts/build-and-run.sh`. It signs with the stable `Apple Development` identity, which keeps TCC (Transparency, Consent, and Control) permissions across rebuilds. Do not change the identity or bundle ID, since either one resets every grant.
 
 Run headless commands through `scripts/headless.sh`, not by executing the binary, so macOS applies Clicky's permissions rather than the shell's.
+
+`CLICKY_DERIVED_DATA` overrides the build directory in both scripts, so parallel checkouts don't share one.
 
 ## Cloudflare Worker (unused here)
 

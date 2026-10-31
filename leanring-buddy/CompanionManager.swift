@@ -95,6 +95,9 @@ final class CompanionManager: ObservableObject {
     /// speaks again before the delay elapses.
     private var transientHideTask: Task<Void, Never>?
 
+    /// Runs Follow Along lessons. See FollowAlongCoordinator.
+    private(set) lazy var followAlongCoordinator = FollowAlongCoordinator(companionManager: self)
+
     /// True when all three required permissions (accessibility, screen recording,
     /// microphone) are granted. Used by the panel to show a single "all good" state.
     var allPermissionsGranted: Bool {
@@ -294,6 +297,8 @@ final class CompanionManager: ObservableObject {
     func buddyDidArriveAtTarget(tipGlobalAppKitLocation: CGPoint) {
         scriptedFlightArrivalContinuation?.resume(returning: tipGlobalAppKitLocation)
         scriptedFlightArrivalContinuation = nil
+        lessonFlightArrivalContinuation?.resume(returning: tipGlobalAppKitLocation)
+        lessonFlightArrivalContinuation = nil
     }
 
     /// Shows the overlay, flies the buddy to a point through the same published
@@ -316,6 +321,90 @@ final class CompanionManager: ObservableObject {
             detectedElementBubbleText = bubbleText
             detectedElementScreenLocation = globalLocation
             detectedElementDisplayFrame = displayFrame
+        }
+    }
+
+    // MARK: - Follow Along Hooks
+
+    /// True during a lesson, which keeps the buddy parked on the current
+    /// control instead of flying home a few seconds after landing.
+    @Published private(set) var isHoldingPointerForLesson = false
+
+    private var lessonFlightArrivalContinuation: CheckedContinuation<CGPoint?, Never>?
+
+    /// How long to wait for a landing. BlueCursorView can decline a flight, for
+    /// example during its welcome animation, and a lesson must not hang on that.
+    private static let lessonFlightTimeoutInNanoseconds: UInt64 = 6_000_000_000
+
+    var isSpeakingForLesson: Bool {
+        textToSpeechClient.isPlaying
+    }
+
+    func prepareOverlayForLesson() {
+        isHoldingPointerForLesson = true
+        transientHideTask?.cancel()
+        transientHideTask = nil
+
+        guard !isOverlayVisible else { return }
+        overlayWindowManager.hasShownOverlayBefore = true
+        overlayWindowManager.showOverlay(onScreens: NSScreen.screens, companionManager: self)
+        isOverlayVisible = true
+    }
+
+    func releaseOverlayAfterLesson() {
+        isHoldingPointerForLesson = false
+        voiceState = .idle
+        scheduleTransientHideIfNeeded()
+    }
+
+    /// The spinner stands in for the triangle while a model is working. Push-to-
+    /// talk's own states always win, so the waveform never gets replaced.
+    func setThinkingForLesson(_ isThinking: Bool) {
+        if isThinking, voiceState == .idle {
+            voiceState = .processing
+        } else if !isThinking, voiceState == .processing {
+            voiceState = .idle
+        }
+    }
+
+    func speakForLesson(_ text: String) async {
+        do {
+            try await textToSpeechClient.speakText(text)
+        } catch {
+            print("⚠️ TTS error: \(error)")
+        }
+    }
+
+    func stopSpeakingForLesson() {
+        textToSpeechClient.stopPlayback()
+    }
+
+    /// Flies the buddy through the same published state the voice pipeline
+    /// uses, and returns where it landed, or nil if it never did.
+    func flyBuddyForLesson(
+        toGlobalAppKitLocation globalLocation: CGPoint,
+        displayFrame: CGRect,
+        bubbleText: String?
+    ) async -> CGPoint? {
+        // Assigning the location it's already at wouldn't start a flight.
+        if detectedElementScreenLocation == globalLocation {
+            return globalLocation
+        }
+
+        lessonFlightArrivalContinuation?.resume(returning: nil)
+        lessonFlightArrivalContinuation = nil
+
+        return await withCheckedContinuation { continuation in
+            lessonFlightArrivalContinuation = continuation
+            detectedElementBubbleText = bubbleText
+            detectedElementDisplayFrame = displayFrame
+            detectedElementScreenLocation = globalLocation
+
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: Self.lessonFlightTimeoutInNanoseconds)
+                self?.lessonFlightArrivalContinuation?.resume(returning: nil)
+                self?.lessonFlightArrivalContinuation = nil
+            }
         }
     }
 
@@ -480,6 +569,9 @@ final class CompanionManager: ObservableObject {
                     self.voiceState = .processing
                 } else {
                     self.voiceState = .idle
+                    // A press with no words produces no transcript, and a
+                    // lesson must not stay paused waiting for one.
+                    self.followAlongCoordinator.userFinishedTalking(transcript: nil)
                     // If the user pressed and released the hotkey without
                     // saying anything, no response task runs — schedule the
                     // transient hide here so the overlay doesn't get stuck.
@@ -527,6 +619,7 @@ final class CompanionManager: ObservableObject {
             currentResponseTask?.cancel()
             textToSpeechClient.stopPlayback()
             clearDetectedElementLocation()
+            followAlongCoordinator.userStartedTalking()
 
             // Dismiss the onboarding prompt if it's showing
             if showOnboardingPrompt {
@@ -553,7 +646,13 @@ final class CompanionManager: ObservableObject {
                         self?.lastTranscript = finalTranscript
                         print("🗣️ Companion received transcript: \(finalTranscript)")
                         ClickyAnalytics.trackUserMessageSent(transcript: finalTranscript)
-                        self?.sendTranscriptToClaudeWithScreenshot(transcript: finalTranscript)
+                        // During a lesson, words go to the lesson. It knows
+                        // which step they're on and what "go back" means.
+                        if self?.followAlongCoordinator.isLessonRunning == true {
+                            self?.followAlongCoordinator.userFinishedTalking(transcript: finalTranscript)
+                        } else {
+                            self?.sendTranscriptToClaudeWithScreenshot(transcript: finalTranscript)
+                        }
                     }
                 )
             }

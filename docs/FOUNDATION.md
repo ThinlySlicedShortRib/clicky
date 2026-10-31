@@ -199,6 +199,17 @@ Accuracy needs no extra upscaling: 1280px and 1568px both hit 9 of 9 small icons
 - The panel says "Grant all four" and doesn't list Speech Recognition, which is requested on first hotkey press.
 - A harmless `default.profraw` warning prints on exit from debug builds.
 
+## Follow Along
+
+A demo build on this base. `docs/demo/follow-along/DEMO.md` has the script, and `docs/demo/follow-along/evidence/README.md` says what was and wasn't verified.
+
+```bash
+scripts/demo-follow-along.sh           # preflight, Blender, lesson
+scripts/demo-follow-along.sh --check   # setup and preflight only
+```
+
+`CLICKY_FOLLOW_ALONG_CHECK_MODEL` overrides the model that judges success checks, which defaults to `claude-haiku-5-5` for claude backends. It reuses the capture, Brain, overlay and speech seams above.
+
 ## What changed from upstream
 
 - **Removed:** PostHog, which sent voice transcripts to the upstream author's project, and the FormSpark email post. The `ClickyAnalytics` calls remain as no-ops.

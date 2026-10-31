@@ -389,6 +389,12 @@ struct BlueCursorView: View {
 
             startNavigatingToElement(screenLocation: screenLocation)
         }
+        .onChange(of: companionManager.isHoldingPointerForLesson) { isHolding in
+            // The lesson ended while the buddy was parked on a control.
+            guard !isHolding, buddyNavigationMode == .pointingAtTarget else { return }
+            navigationBubbleOpacity = 0.0
+            startFlyingBackToCursor()
+        }
     }
 
     /// Whether the buddy triangle should be visible on this screen.
@@ -604,6 +610,9 @@ struct BlueCursorView: View {
             // All characters streamed — hold for 3 seconds, then fly back
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                 guard self.buddyNavigationMode == .pointingAtTarget else { return }
+                // A lesson parks the buddy on the control until the step is
+                // done. It leaves when the next target or the lesson's end says so.
+                guard !self.companionManager.isHoldingPointerForLesson else { return }
                 self.navigationBubbleOpacity = 0.0
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     guard self.buddyNavigationMode == .pointingAtTarget else { return }

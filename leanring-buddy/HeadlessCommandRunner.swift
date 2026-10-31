@@ -15,6 +15,7 @@ import AppKit
 import AVFoundation
 import Foundation
 import Speech
+import SwiftUI
 import Vision
 
 // MARK: - Commands
@@ -48,6 +49,13 @@ struct HeadlessPointOptions {
     var cancelBrainAfterSeconds: Double?
 }
 
+struct FollowAlongRehearsalOptions {
+    let bridgeDirectoryPath: String
+    let videoIdentifier: String
+    let contentRectInDisplayPoints: CGRect
+    let isMuted: Bool
+}
+
 enum HeadlessCommand {
     case permissions
     case selfTest
@@ -57,6 +65,9 @@ enum HeadlessCommand {
     case transcribe(audioFilePath: String)
     case windowBounds(owningApplicationName: String)
     case ask(transcript: String)
+    case followAlongImport(pastedLink: String)
+    case followAlongRehearsal(FollowAlongRehearsalOptions)
+    case followAlongRenderSurfaces(outputDirectoryPath: String)
 
     /// Returns nil when no headless flag is present and the app should launch
     /// normally. Bad arguments exit immediately so a script can't mistake a
@@ -143,6 +154,27 @@ enum HeadlessCommand {
             return .ask(transcript: transcript)
         }
 
+        if let pastedLink = value(after: "--headless-follow-along-import") {
+            return .followAlongImport(pastedLink: pastedLink)
+        }
+
+        if let bridgeDirectoryPath = value(after: "--headless-follow-along-rehearsal") {
+            guard let videoIdentifier = value(after: "--video"),
+                  let contentRect = parseRect(after: "--content-rect") else {
+                exitWithUsageError("--headless-follow-along-rehearsal needs --video <id> and --content-rect x,y,w,h")
+            }
+            return .followAlongRehearsal(FollowAlongRehearsalOptions(
+                bridgeDirectoryPath: bridgeDirectoryPath,
+                videoIdentifier: videoIdentifier,
+                contentRectInDisplayPoints: contentRect,
+                isMuted: arguments.contains("--mute")
+            ))
+        }
+
+        if let outputDirectoryPath = value(after: "--headless-follow-along-render-surfaces") {
+            return .followAlongRenderSurfaces(outputDirectoryPath: outputDirectoryPath)
+        }
+
         let headlessFlagWasMistyped = arguments.contains { $0.hasPrefix("--headless") }
         if headlessFlagWasMistyped {
             exitWithUsageError("unknown or incomplete headless command: \(arguments.dropFirst().joined(separator: " "))")
@@ -153,7 +185,7 @@ enum HeadlessCommand {
 
 // MARK: - Output
 
-private enum HeadlessOutput {
+enum HeadlessOutput {
     static var outputPath: String? {
         let arguments = CommandLine.arguments
         guard let flagIndex = arguments.firstIndex(of: "--output"), flagIndex + 1 < arguments.count else { return nil }
@@ -204,10 +236,18 @@ struct HeadlessCommandRunner {
     let companionManager: CompanionManager
 
     private static let wholeCommandTimeoutInSeconds: TimeInterval = 300
+    /// A rehearsal plays a whole lesson in real time and building a lesson
+    /// downloads a video, and neither one fits the normal limit.
+    private static let longCommandTimeoutInSeconds: TimeInterval = 1_500
     private static let speechAuthorizationPromptWaitInSeconds: TimeInterval = 20
 
     func run(_ command: HeadlessCommand) async {
-        scheduleWatchdog()
+        switch command {
+        case .followAlongImport, .followAlongRehearsal:
+            scheduleWatchdog(afterSeconds: Self.longCommandTimeoutInSeconds)
+        default:
+            scheduleWatchdog(afterSeconds: Self.wholeCommandTimeoutInSeconds)
+        }
 
         switch command {
         case .permissions:
@@ -226,14 +266,20 @@ struct HeadlessCommandRunner {
             runWindowBounds(owningApplicationName: owningApplicationName)
         case .ask(let transcript):
             await runAsk(transcript: transcript)
+        case .followAlongImport(let pastedLink):
+            await runFollowAlongImport(pastedLink: pastedLink)
+        case .followAlongRehearsal(let options):
+            await runFollowAlongRehearsal(options)
+        case .followAlongRenderSurfaces(let outputDirectoryPath):
+            runFollowAlongRenderSurfaces(outputDirectoryPath: outputDirectoryPath)
         }
     }
 
     /// A hung subprocess or an overlay that never lands must fail the check
     /// rather than leave a script waiting forever.
-    private func scheduleWatchdog() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.wholeCommandTimeoutInSeconds) {
-            HeadlessOutput.finish(["status": "failed", "error": "timed out after \(Self.wholeCommandTimeoutInSeconds)s"], exitCode: 1)
+    private func scheduleWatchdog(afterSeconds timeoutInSeconds: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeoutInSeconds) {
+            HeadlessOutput.finish(["status": "failed", "error": "timed out after \(timeoutInSeconds)s"], exitCode: 1)
         }
     }
 
@@ -710,6 +756,127 @@ struct HeadlessCommandRunner {
         ], exitCode: matchingWindowBounds.isEmpty ? 1 : 0)
     }
 
+    // MARK: Follow Along
+
+    /// Builds a lesson through the same importer the paste surface uses.
+    private func runFollowAlongImport(pastedLink: String) async {
+        guard let videoIdentifier = FollowAlongYouTubeLink.videoIdentifier(from: pastedLink) else {
+            HeadlessOutput.finish(["status": "failed", "error": "not a YouTube link: \(pastedLink)"], exitCode: 1)
+        }
+
+        do {
+            let startDate = Date()
+            let (lesson, wasBuiltNow) = try await companionManager.followAlongCoordinator.loadOrBuildLesson(videoIdentifier: videoIdentifier)
+            HeadlessOutput.finish([
+                "status": "ok",
+                "wasBuiltNow": wasBuiltNow,
+                "seconds": Date().timeIntervalSince(startDate),
+                "lessonFile": FollowAlongStorage.lessonFileURL(videoIdentifier: videoIdentifier).path,
+                "lessonTitle": lesson.lessonTitle,
+                "license": lesson.source.licenseDescription,
+                "stepCount": lesson.steps.count,
+                "planningCostInUSD": lesson.generation.totalCostInUSD ?? NSNull(),
+                "planningBrainCalls": lesson.generation.brainCalls.map { HeadlessOutput.json($0.usage) }
+            ], exitCode: 0)
+        } catch {
+            HeadlessOutput.finish(["status": "failed", "error": error.localizedDescription], exitCode: 1)
+        }
+    }
+
+    /// See FollowAlongRehearsal.swift. Runs the real coordinator and runner on
+    /// frames Blender exports, and says so in its result.
+    private func runFollowAlongRehearsal(_ options: FollowAlongRehearsalOptions) async {
+        guard let lesson = FollowAlongStorage.loadCachedLesson(videoIdentifier: options.videoIdentifier) else {
+            HeadlessOutput.finish(["status": "failed", "error": "no saved lesson for \(options.videoIdentifier). Run --headless-follow-along-import first."], exitCode: 1)
+        }
+
+        let bridgeDirectoryURL = URL(fileURLWithPath: options.bridgeDirectoryPath, isDirectory: true)
+        let coordinator = companionManager.followAlongCoordinator
+        let realPresenter = CompanionFollowAlongPresenter(companionManager: companionManager)
+        let presenter: any FollowAlongPresenter = options.isMuted
+            ? FollowAlongMutedPresenter(wrapping: realPresenter)
+            : realPresenter
+
+        let voiceFeed = FollowAlongRehearsalVoiceFeed(bridgeDirectoryURL: bridgeDirectoryURL, coordinator: coordinator)
+        voiceFeed.start()
+
+        let summary = await coordinator.performLesson(
+            lesson: lesson,
+            planWasBuiltDuringThisRun: false,
+            screenSource: FollowAlongBlenderBridgeScreenSource(
+                bridgeDirectoryURL: bridgeDirectoryURL,
+                contentRectInDisplayPoints: options.contentRectInDisplayPoints
+            ),
+            presenter: presenter,
+            runLog: FollowAlongRunLog(directoryURL: bridgeDirectoryURL)
+        )
+        voiceFeed.stop()
+
+        HeadlessOutput.finish([
+            "status": summary.finishedEveryStep ? "ok" : "failed",
+            "captureSource": summary.captureSourceDescription,
+            "stepsCompleted": summary.stepsCompleted,
+            "stepCount": summary.stepCount,
+            "adaptationCount": summary.adaptations.count,
+            "failureMessage": summary.failureMessage ?? NSNull()
+        ], exitCode: summary.finishedEveryStep ? 0 : 1)
+    }
+
+    /// Draws the real SwiftUI surfaces to PNG. Rendering a view doesn't need
+    /// Screen Recording, so the design can be checked on an ungranted machine.
+    private func runFollowAlongRenderSurfaces(outputDirectoryPath: String) {
+        let coordinator = companionManager.followAlongCoordinator
+        let outputDirectoryURL = URL(fileURLWithPath: outputDirectoryPath, isDirectory: true)
+        try? FileManager.default.createDirectory(at: outputDirectoryURL, withIntermediateDirectories: true)
+
+        let summaryFileURL = outputDirectoryURL.appendingPathComponent("summary-input.json")
+        guard let summaryData = try? Data(contentsOf: summaryFileURL),
+              let summary = try? JSONDecoder().decode(FollowAlongRunSummary.self, from: summaryData) else {
+            HeadlessOutput.finish(["status": "failed", "error": "put a real run's summary.json at \(summaryFileURL.path)"], exitCode: 1)
+        }
+
+        func render<Content: View>(_ rootView: Content, named fileName: String) -> Bool {
+            let hostingView = NSHostingView(rootView: rootView.padding(24).background(Color(white: 0.16)))
+            hostingView.frame = CGRect(origin: .zero, size: hostingView.fittingSize)
+            hostingView.layoutSubtreeIfNeeded()
+
+            guard let bitmap = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds) else { return false }
+            hostingView.cacheDisplay(in: hostingView.bounds, to: bitmap)
+            guard let pngData = bitmap.representation(using: .png, properties: [:]) else { return false }
+            return (try? pngData.write(to: outputDirectoryURL.appendingPathComponent(fileName))) != nil
+        }
+
+        var renderedFileNames: [String] = []
+
+        coordinator.applyStateForRendering(phase: .pasting, runProgress: nil)
+        if render(FollowAlongPasteSurfaceView(coordinator: coordinator), named: "surface-paste.png") {
+            renderedFileNames.append("surface-paste.png")
+        }
+
+        coordinator.applyStateForRendering(phase: .importing(statusText: FollowAlongImportProgress.planningSteps.statusText), runProgress: nil)
+        if render(FollowAlongPasteSurfaceView(coordinator: coordinator), named: "surface-importing.png") {
+            renderedFileNames.append("surface-importing.png")
+        }
+
+        coordinator.applyStateForRendering(phase: .running, runProgress: FollowAlongRunProgress(
+            stepNumber: summary.stepCount,
+            stepCount: summary.stepCount,
+            stepTitle: "final step",
+            statusText: "your turn",
+            costSnapshot: summary.costSnapshot
+        ))
+        if render(FollowAlongHUDView(coordinator: coordinator), named: "surface-meter.png") {
+            renderedFileNames.append("surface-meter.png")
+        }
+
+        coordinator.applyStateForRendering(phase: .finished(summary), runProgress: nil)
+        if render(FollowAlongEndCardView(coordinator: coordinator), named: "surface-end-card.png") {
+            renderedFileNames.append("surface-end-card.png")
+        }
+
+        HeadlessOutput.finish(["status": renderedFileNames.count == 4 ? "ok" : "failed", "rendered": renderedFileNames], exitCode: renderedFileNames.count == 4 ? 0 : 1)
+    }
+
     // MARK: Self Test
 
     /// Checks the pure coordinate and parsing logic. These cases simulate
@@ -825,6 +992,96 @@ struct HeadlessCommandRunner {
         expect(SayTTSClient.chooseBestVoiceName(fromVoiceListOutput: voiceList) == "Samantha", "falls back to Samantha")
         expect(SayTTSClient.chooseBestVoiceName(fromVoiceListOutput: voiceList + "\nAva (Premium)       en_US    # Hello!") == "Ava (Premium)", "prefers a Premium voice")
 
+        // Follow Along links. Anything rebuilt from the id can't carry a flag.
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "https://www.youtube.com/watch?v=_deRNqDcwRk") == "_deRNqDcwRk", "watch link")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "  https://youtu.be/_deRNqDcwRk?t=12 \n") == "_deRNqDcwRk", "short link with a timestamp")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "https://www.youtube.com/watch?list=PLxyz&v=_deRNqDcwRk") == "_deRNqDcwRk", "v is not the first parameter")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "youtube.com/shorts/_deRNqDcwRk") == "_deRNqDcwRk", "shorts link, no scheme")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "https://evil.example/watch?v=_deRNqDcwRk") == nil, "other hosts are refused")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "--exec rm") == nil, "a flag is refused")
+        expect(FollowAlongYouTubeLink.videoIdentifier(from: "") == nil, "empty is refused")
+
+        // Follow Along voice commands.
+        expect(FollowAlongVoiceCommand.interpret(transcript: "wait, go back") == .goBack, "wait, go back")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "Go back.") == .goBack, "go back with a capital and period")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "say that again") == .repeatStep, "repeat")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "okay i did it") == .markDone, "done")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "skip this one") == .skipStep, "skip")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "stop the lesson") == .stopLesson, "stop")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "hold on") == .pause, "pause")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "keep going") == .resume, "resume")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "what does this do?") == .question("what does this do?"), "a question stays a question")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "how do i go back to object mode") == .question("how do i go back to object mode"), "go back inside a question is a question")
+        expect(FollowAlongVoiceCommand.interpret(transcript: "i think i've completely lost track of where we were up to") == .question("i think i've completely lost track of where we were up to"), "a long sentence is a question")
+
+        // Follow Along cost rules: nil is "not reported", never zero.
+        func makeUsage(costInUSD: Double?) -> BrainUsage {
+            BrainUsage(
+                backendName: "test", modelIdentifier: "test", inputTokens: 10, outputTokens: 5,
+                cacheReadInputTokens: nil, cacheCreationInputTokens: nil, costInUSD: costInUSD,
+                isCostEstimated: costInUSD != nil, costSourceDescription: "test",
+                timeToFirstTextInSeconds: nil, totalDurationInSeconds: 1
+            )
+        }
+        var costLedger = FollowAlongCostLedger()
+        expect(costLedger.snapshot(elapsedInSeconds: 60).naiveEstimatedCostInUSD == nil, "no measured cost means no naive figure")
+        costLedger.record(purpose: .locateTarget, stepIdentifier: "a", usage: makeUsage(costInUSD: 0.01))
+        costLedger.record(purpose: .checkSuccess, stepIdentifier: "a", usage: makeUsage(costInUSD: 0.001))
+        costLedger.record(purpose: .checkSuccess, stepIdentifier: "a", usage: makeUsage(costInUSD: 0.003))
+        let costSnapshot = costLedger.snapshot(elapsedInSeconds: 100)
+        expect(abs((costSnapshot.totalCostInUSD ?? 0) - 0.014) < 0.000_001, "total adds reported costs")
+        expect(abs((costSnapshot.naiveEstimatedCostInUSD ?? 0) - 1.0) < 0.000_001, "naive uses the main model's mean per look: 100 x 0.01")
+        expect(abs((costSnapshot.naiveFloorEstimatedCostInUSD ?? 0) - 0.2) < 0.000_001, "the floor uses the cheapest mean per look: 100 x 0.002")
+        expect(costSnapshot.screensSentToModel == 3, "every screen call counts as sent")
+        costLedger.record(purpose: .checkSuccess, stepIdentifier: "a", usage: makeUsage(costInUSD: nil))
+        expect(costLedger.snapshot(elapsedInSeconds: 100).totalCostInUSD == nil, "one unreported cost makes the total unreported")
+        expect(FollowAlongCostFormatting.costText(nil, isEstimated: true) == "cost not reported", "nil cost is never shown as a number")
+        expect(FollowAlongCostFormatting.costText(0.0123, isEstimated: true) == "$0.0123 est", "estimates say so")
+
+        // Follow Along screen gate.
+        func makeGreyJPEG(brightness: CGFloat, boxBrightness: CGFloat?) -> Data {
+            let image = NSImage(size: NSSize(width: 960, height: 620))
+            image.lockFocus()
+            NSColor(white: brightness, alpha: 1).setFill()
+            NSRect(x: 0, y: 0, width: 960, height: 620).fill()
+            if let boxBrightness {
+                NSColor(white: boxBrightness, alpha: 1).setFill()
+                NSRect(x: 300, y: 200, width: 200, height: 100).fill()
+            }
+            image.unlockFocus()
+            let bitmap = NSBitmapImageRep(data: image.tiffRepresentation ?? Data())
+            return bitmap?.representation(using: .jpeg, properties: [.compressionFactor: 0.8]) ?? Data()
+        }
+        let plainFingerprint = FollowAlongScreenFingerprint(imageData: makeGreyJPEG(brightness: 0.3, boxBrightness: nil))
+        let sameFingerprint = FollowAlongScreenFingerprint(imageData: makeGreyJPEG(brightness: 0.3, boxBrightness: nil))
+        let changedFingerprint = FollowAlongScreenFingerprint(imageData: makeGreyJPEG(brightness: 0.3, boxBrightness: 0.8))
+        if let plainFingerprint, let sameFingerprint, let changedFingerprint {
+            expect(plainFingerprint.changedCellCount(comparedTo: sameFingerprint) == 0, "an identical screen shows no change")
+            expect(plainFingerprint.changedCellCount(comparedTo: changedFingerprint) > 20, "a new panel shows as a change")
+        } else {
+            expect(false, "screen fingerprints decode")
+        }
+
+        // Follow Along model output handling.
+        let fencedReply = "here you go:\n```json\n{\"state\": \"passed\"}\n```"
+        let extractedReply = FollowAlongJSONExtraction.jsonObjectData(from: fencedReply).map { String(decoding: $0, as: UTF8.self) }
+        expect(extractedReply == "{\"state\": \"passed\"}", "json is pulled out of a code fence")
+        expect(FollowAlongJSONExtraction.jsonObjectData(from: "no json here") == nil, "a reply with no json is rejected")
+
+        let transcriptSample = #"{"events":[{"tStartMs":1000,"segs":[{"utf8":"hello "},{"utf8":"there"}]},{"tStartMs":2000},{"tStartMs":3000,"segs":[{"utf8":"\n"}]}]}"#
+        let parsedTranscript = FollowAlongTranscriptParser.segments(fromJSON3Data: Data(transcriptSample.utf8))
+        expect(parsedTranscript.count == 1 && parsedTranscript.first?.text == "hello there", "captions keep only real text")
+
+        // Follow Along paste handling, with a private pasteboard so a check
+        // can never overwrite what the user has copied.
+        let testPasteboard = NSPasteboard(name: NSPasteboard.Name("clicky.follow-along.self-test"))
+        testPasteboard.clearContents()
+        testPasteboard.setString(" https://youtu.be/_deRNqDcwRk \n", forType: .string)
+        let pasteCoordinator = companionManager.followAlongCoordinator
+        FollowAlongSurfaceManager(coordinator: pasteCoordinator).pasteClipboardIntoLinkField(from: testPasteboard)
+        expect(pasteCoordinator.pastedLinkText == "https://youtu.be/_deRNqDcwRk", "clipboard text lands in the link field, trimmed")
+        testPasteboard.releaseGlobally()
+
         HeadlessOutput.finish([
             "status": failures.isEmpty ? "ok" : "failed",
             "checks": checkCount,
@@ -872,7 +1129,7 @@ struct GroundTruthImage {
 /// Builds a capture from a saved image, shaped exactly like a real one: a
 /// full-display frame at the same downscaled size. Everything after capture
 /// then runs unchanged, including the scaling that real captures go through.
-private enum FixtureScreenCapture {
+enum FixtureScreenCapture {
     struct FixtureError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
