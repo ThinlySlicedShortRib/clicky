@@ -64,6 +64,7 @@ final class CompanionManager: ObservableObject {
     let buddyDictationManager = BuddyDictationManager()
     let globalPushToTalkShortcutMonitor = GlobalPushToTalkShortcutMonitor()
     let overlayWindowManager = OverlayWindowManager()
+    let showMeOnceCoordinator = ShowMeOnceCoordinator()
     // Response text is now displayed inline on the cursor overlay via
     // streamingResponseText, so no separate response overlay manager is needed.
 
@@ -72,11 +73,11 @@ final class CompanionManager: ObservableObject {
 
     /// Speaks replies aloud. Assign a different CompanionTextToSpeechClient
     /// here to change the voice backend.
-    private let textToSpeechClient: any CompanionTextToSpeechClient = SayTTSClient()
+    fileprivate let textToSpeechClient: any CompanionTextToSpeechClient = SayTTSClient()
 
     /// Conversation history so Claude remembers prior exchanges within a session.
     /// Each entry is the user's transcript and Claude's response.
-    private var conversationHistory: [BrainConversationExchange] = []
+    fileprivate var conversationHistory: [BrainConversationExchange] = []
 
     /// Tokens, cost and latency of the most recent reply, for builds that show
     /// them on screen. Check isCostEstimated before displaying the cost.
@@ -84,7 +85,7 @@ final class CompanionManager: ObservableObject {
 
     /// The currently running AI response task, if any. Cancelled when the user
     /// speaks again so a new response can begin immediately.
-    private var currentResponseTask: Task<Void, Never>?
+    fileprivate var currentResponseTask: Task<Void, Never>?
 
     private var shortcutTransitionCancellable: AnyCancellable?
     private var voiceStateCancellable: AnyCancellable?
@@ -113,6 +114,7 @@ final class CompanionManager: ObservableObject {
     func setSelectedModel(_ model: String) {
         selectedModel = model
         brain = BrainConfiguration.makeBrain(modelValue: model)
+        showMeOnceCoordinator.setModelValue(model)
     }
 
     /// User preference for whether the Clicky cursor should be shown.
@@ -165,6 +167,7 @@ final class CompanionManager: ObservableObject {
         bindVoiceStateObservation()
         bindAudioPowerLevel()
         bindShortcutTransitions()
+        showMeOnceCoordinator.start(presenter: self)
 
         // If the user already completed onboarding AND all permissions are
         // still granted, show the cursor overlay immediately. If permissions
@@ -287,13 +290,16 @@ final class CompanionManager: ObservableObject {
     }
 
     /// Resumed by BlueCursorView when the buddy lands, for scripted checks.
-    private var scriptedFlightArrivalContinuation: CheckedContinuation<CGPoint, Never>?
+    fileprivate var scriptedFlightArrivalContinuation: CheckedContinuation<CGPoint, Never>?
+    /// The same arrival signal for a lesson's point, which has its own timeout.
+    fileprivate var lessonFlightContinuation: CheckedContinuation<Void, Never>?
 
     /// Called by BlueCursorView with where the triangle's tip actually landed,
     /// in global AppKit coordinates.
     func buddyDidArriveAtTarget(tipGlobalAppKitLocation: CGPoint) {
         scriptedFlightArrivalContinuation?.resume(returning: tipGlobalAppKitLocation)
         scriptedFlightArrivalContinuation = nil
+        finishLessonFlight()
     }
 
     /// Shows the overlay, flies the buddy to a point through the same published
@@ -319,7 +325,16 @@ final class CompanionManager: ObservableObject {
         }
     }
 
+    // MARK: - Lesson Pointing
+
+    /// While true, the buddy stays at its target instead of flying back, so
+    /// it keeps pointing for as long as the follower needs on a lesson step.
+    @Published private(set) var isHoldingPointForLesson = false
+    /// Bumped to tell BlueCursorView to let go of a held point.
+    @Published private(set) var lessonPointReleaseCount = 0
+
     func stop() {
+        showMeOnceCoordinator.stop()
         globalPushToTalkShortcutMonitor.stop()
         buddyDictationManager.cancelCurrentDictation()
         overlayWindowManager.hideOverlay()
@@ -508,6 +523,11 @@ final class CompanionManager: ObservableObject {
             guard !buddyDictationManager.isDictationInProgress else { return }
             // Don't register push-to-talk while the onboarding video is playing
             guard !showOnboardingVideo else { return }
+            // While teaching, the microphone belongs to the narration, and a
+            // held modifier shouldn't turn into a question for Clicky.
+            guard !showMeOnceCoordinator.isTeaching else { return }
+
+            showMeOnceCoordinator.followController.pauseForQuestion()
 
             // Cancel any pending transient hide so the overlay stays visible
             transientHideTask?.cancel()
@@ -644,7 +664,10 @@ final class CompanionManager: ObservableObject {
                 // Pass conversation history so Claude remembers prior exchanges
                 let brainResponse = try await brain.respond(
                     to: BrainRequest(
-                        systemPrompt: Self.companionVoiceResponseSystemPrompt,
+                        // During a lesson, questions are answered from the
+                        // teacher's narration rather than as general chat.
+                        systemPrompt: showMeOnceCoordinator.followController.questionSystemPrompt
+                            ?? Self.companionVoiceResponseSystemPrompt,
                         conversationHistory: conversationHistory,
                         userPrompt: transcript,
                         images: Self.makeBrainImages(from: screenCaptures)
@@ -1053,5 +1076,84 @@ final class CompanionManager: ObservableObject {
                 print("⚠️ Onboarding demo error: \(error)")
             }
         }
+    }
+}
+
+// MARK: - Lesson Follow Presenter
+
+extension CompanionManager: LessonFollowPresenter {
+    /// How long a flight can take at most, plus room for a busy main thread.
+    private static var lessonFlightTimeoutInNanoseconds: UInt64 { 3_000_000_000 }
+
+    func pointBuddyAtLessonTarget(globalAppKitLocation: CGPoint, displayFrame: CGRect, bubbleText: String) async {
+        if !overlayWindowManager.isShowingOverlay() {
+            overlayWindowManager.hasShownOverlayBefore = true
+            overlayWindowManager.showOverlay(onScreens: NSScreen.screens, companionManager: self)
+            isOverlayVisible = true
+            // BlueCursorView only reacts to location changes once mounted.
+            try? await Task.sleep(nanoseconds: 300_000_000)
+        }
+
+        isHoldingPointForLesson = true
+
+        // A location equal to the current one wouldn't register as a change,
+        // and a repeat point at the same spot is normal after a question.
+        clearDetectedElementLocation()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            scriptedFlightArrivalContinuation?.resume(returning: globalAppKitLocation)
+            scriptedFlightArrivalContinuation = nil
+
+            lessonFlightContinuation = continuation
+            detectedElementBubbleText = bubbleText
+            detectedElementScreenLocation = globalAppKitLocation
+            detectedElementDisplayFrame = displayFrame
+
+            // The overlay can refuse a flight, such as during its welcome
+            // animation, and a lesson can't wait forever for that.
+            Task {
+                try? await Task.sleep(nanoseconds: Self.lessonFlightTimeoutInNanoseconds)
+                self.finishLessonFlight()
+            }
+        }
+    }
+
+    func finishLessonFlight() {
+        lessonFlightContinuation?.resume()
+        lessonFlightContinuation = nil
+    }
+
+    func releaseLessonPoint() {
+        finishLessonFlight()
+        guard isHoldingPointForLesson else { return }
+        isHoldingPointForLesson = false
+        lessonPointReleaseCount += 1
+    }
+
+    func speakLessonLine(_ line: String) async {
+        do {
+            try await textToSpeechClient.speakText(line)
+        } catch {
+            print("⚠️ TTS error: \(error)")
+        }
+    }
+
+    func stopLessonSpeech() {
+        textToSpeechClient.stopPlayback()
+    }
+
+    var isSpeakingLessonLine: Bool {
+        textToSpeechClient.isPlaying
+    }
+
+    var isAnsweringFollowerQuestion: Bool {
+        voiceState != .idle
+            || buddyDictationManager.isDictationInProgress
+            || currentResponseTask != nil && textToSpeechClient.isPlaying
+    }
+
+    func prepareForNewLesson() {
+        conversationHistory.removeAll()
     }
 }

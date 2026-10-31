@@ -278,7 +278,7 @@ struct ClaudeCLIBrain: Brain {
 
         let exitStatus = try await processRun.run(
             standardInputData: try makeStandardInputData(for: request),
-            timeoutInSeconds: Self.timeoutInSeconds
+            timeoutInSeconds: request.timeoutOverrideInSeconds ?? Self.timeoutInSeconds
         ) { outputLine in
             Self.handleOutputLine(outputLine, streamState: streamState, onTextDelta: onTextDelta)
         }
@@ -431,7 +431,7 @@ struct CodexCLIBrain: Brain {
 
         let exitStatus = try await processRun.run(
             standardInputData: nil,
-            timeoutInSeconds: Self.timeoutInSeconds
+            timeoutInSeconds: request.timeoutOverrideInSeconds ?? Self.timeoutInSeconds
         ) { outputLine in
             Self.handleOutputLine(outputLine, streamState: streamState, onTextDelta: onTextDelta)
         }

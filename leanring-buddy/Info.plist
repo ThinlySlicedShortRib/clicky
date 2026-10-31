@@ -4,6 +4,42 @@
 <dict>
 	<key>LSUIElement</key>
 	<true/>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Clicky Lesson</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.yourcompany.leanring-buddy.lesson</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.yourcompany.leanring-buddy.lesson</string>
+			<key>UTTypeDescription</key>
+			<string>Clicky Lesson</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>clicky</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/julianjear/makesomething-mac-app/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>

@@ -33,6 +33,12 @@ struct CompanionPanelView: View {
                     .padding(.horizontal, 16)
             }
 
+            Spacer()
+                .frame(height: 14)
+
+            ShowMeOncePanelSection(coordinator: companionManager.showMeOnceCoordinator)
+                .padding(.horizontal, 16)
+
             if !companionManager.allPermissionsGranted {
                 Spacer()
                     .frame(height: 16)

@@ -34,6 +34,9 @@ struct BrainRequest {
     let conversationHistory: [BrainConversationExchange]
     let userPrompt: String
     let images: [BrainImage]
+    /// Replaces the backend's default limit, for work far longer than a voice
+    /// reply, such as compiling a whole lesson.
+    var timeoutOverrideInSeconds: TimeInterval? = nil
 }
 
 /// Tokens, cost and timing for one Brain call, for showing on screen.

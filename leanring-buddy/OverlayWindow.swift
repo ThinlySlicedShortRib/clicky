@@ -373,6 +373,11 @@ struct BlueCursorView: View {
             navigationAnimationTimer?.invalidate()
             companionManager.tearDownOnboardingVideo()
         }
+        .onChange(of: companionManager.lessonPointReleaseCount) { _ in
+            guard buddyNavigationMode == .pointingAtTarget else { return }
+            navigationBubbleOpacity = 0.0
+            startFlyingBackToCursor()
+        }
         .onChange(of: companionManager.detectedElementScreenLocation) { newLocation in
             // When a UI element location is detected, navigate the buddy to
             // that position so it points at the element.
@@ -601,9 +606,13 @@ struct BlueCursorView: View {
             ?? "right here!"
 
         streamNavigationBubbleCharacter(phrase: pointerPhrase, characterIndex: 0) {
+            // On a lesson step the buddy stays put until the step is done.
+            guard !companionManager.isHoldingPointForLesson else { return }
+
             // All characters streamed — hold for 3 seconds, then fly back
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                 guard self.buddyNavigationMode == .pointingAtTarget else { return }
+                guard !companionManager.isHoldingPointForLesson else { return }
                 self.navigationBubbleOpacity = 0.0
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     guard self.buddyNavigationMode == .pointingAtTarget else { return }

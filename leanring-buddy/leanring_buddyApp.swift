@@ -73,6 +73,14 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         // startSparkleUpdater()
     }
 
+    /// Double-clicking a `.clicky` file lands here, including when that launch
+    /// is what started the app. Headless runs ignore it, because a check should
+    /// never be turned into a live lesson by a file event.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard menuBarPanelManager != nil, let lessonFileURL = urls.first else { return }
+        companionManager.showMeOnceCoordinator.openLesson(at: lessonFileURL)
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         companionManager.stop()
     }
