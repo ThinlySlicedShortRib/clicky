@@ -689,8 +689,12 @@ final class FollowAlongLessonRunner {
     }
 
     private func recordAdaptationIfNeeded(step: FollowAlongLessonStep, locatedTarget: FollowAlongLocatedTarget?) {
+        // The locator leaves the spoken line empty when it has already told the
+        // user about this change, so that's also what keeps the end card from
+        // listing one change once per step it touched.
         guard let locatedTarget, !locatedTarget.interfaceMatchesVideo,
               let whatChanged = locatedTarget.whatChanged,
+              let spokenAdaptation = locatedTarget.spokenAdaptation, !spokenAdaptation.isEmpty,
               !adaptations.contains(where: { $0.stepIdentifier == step.id }) else {
             return
         }
