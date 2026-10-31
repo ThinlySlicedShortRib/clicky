@@ -116,7 +116,7 @@ Ten complete lessons on the last three commits. Nine finished. Earlier runs aren
 
 ## Known problems
 
-- **Model output varies.** The wording, and where the node gets dropped, change every run. One rehearsal said the old dropdown became the `F1` dropdown, which is wrong. The prompt now rules that out, and it didn't recur in the last ten runs, but check every take.
+- **Model output varies.** The wording, and where the node gets dropped, change every run. One rehearsal said the old dropdown became the `F1` dropdown, which is wrong. The prompt now rules that out, and it didn't recur in the eight kept logs from the runs above, but check every take.
 - **Very small controls are a real limit.** At a far zoom a click can land one row off, and a finished step can be misread. Pointing works on a 1280px image, so tiny UI suffers.
 - **Haiku's labels aren't stable.** It sometimes says "not yet" when the student has left the step entirely. A free local check catches that: if a fifth of the screen changed and the step isn't done, Clicky re-locates.
 - **Repeat runs on a real screen start cold.** Location cache entries from rehearsals won't match a real screen, so the first real run costs like a cold one.
