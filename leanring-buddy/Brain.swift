@@ -76,6 +76,10 @@ struct BrainError: LocalizedError {
 protocol Brain {
     var displayName: String { get }
 
+    /// Who receives a screenshot sent to this Brain, in the words the UI uses.
+    /// Must stay honest: only a Brain that runs on this Mac may say "this mac".
+    var screenshotDestinationName: String { get }
+
     /// Returns the complete reply. `onTextDelta` fires on the main actor with
     /// each new piece of text as it arrives; backends that cannot stream call
     /// it once with the whole reply. Throws CancellationError when the
@@ -96,6 +100,7 @@ enum BrainConfiguration {
     ///   claude-sonnet-5-5  -> claude CLI with that model (any claude-* id)
     ///   codex              -> codex CLI with its default model
     ///   codex:<model>      -> codex CLI with that model
+    ///   ollama:<model>     -> local ollama server with that model
     static var configuredModelValue: String {
         if let environmentValue = ProcessInfo.processInfo.environment[modelEnvironmentVariableName],
            !environmentValue.isEmpty {
@@ -110,6 +115,9 @@ enum BrainConfiguration {
         }
         if modelValue.hasPrefix("codex:") {
             return CodexCLIBrain(modelIdentifier: String(modelValue.dropFirst("codex:".count)))
+        }
+        if modelValue.hasPrefix("ollama:") {
+            return OllamaBrain(modelIdentifier: String(modelValue.dropFirst("ollama:".count)))
         }
         return ClaudeCLIBrain(modelIdentifier: modelValue)
     }

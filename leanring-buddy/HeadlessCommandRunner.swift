@@ -46,6 +46,9 @@ struct HeadlessPointOptions {
     var priorAssistantResponse: String?
     /// Cancels the Brain call after this long, the way a new hotkey press does.
     var cancelBrainAfterSeconds: Double?
+    /// Sends the prompt a Stuck yes sends instead of `userPrompt`, with these
+    /// receipt lines, so the real help prompt is what gets judged.
+    var stuckReceiptLines: [String]?
 }
 
 enum HeadlessCommand {
@@ -57,6 +60,10 @@ enum HeadlessCommand {
     case transcribe(audioFilePath: String)
     case windowBounds(owningApplicationName: String)
     case ask(transcript: String)
+    case stuckStatus
+    case stuckTapCheck
+    case stuckOffer(HeadlessStuckOfferOptions)
+    case stuckReceiptRender(outputPath: String, isEmpty: Bool)
 
     /// Returns nil when no headless flag is present and the app should launch
     /// normally. Bad arguments exit immediately so a script can't mistake a
@@ -103,6 +110,11 @@ enum HeadlessCommand {
             options.priorUserTranscript = value(after: "--prior-user")
             options.priorAssistantResponse = value(after: "--prior-assistant")
             options.cancelBrainAfterSeconds = value(after: "--cancel-after").flatMap { Double($0) }
+            if arguments.contains("--stuck-prompt") {
+                options.stuckReceiptLines = (value(after: "--receipt-lines") ?? "")
+                    .split(separator: "|")
+                    .map(String.init)
+            }
             if let rawMaximumDimension = value(after: "--max-dimension") {
                 guard let maximumDimension = Int(rawMaximumDimension) else {
                     exitWithUsageError("--max-dimension expects an integer, got \(rawMaximumDimension)")
@@ -143,6 +155,36 @@ enum HeadlessCommand {
             return .ask(transcript: transcript)
         }
 
+        if arguments.contains("--headless-stuck-status") {
+            return .stuckStatus
+        }
+
+        if arguments.contains("--headless-stuck-tap-check") {
+            return .stuckTapCheck
+        }
+
+        if arguments.contains("--headless-stuck-offer") {
+            var options = HeadlessStuckOfferOptions()
+            let rawAnswer = value(after: "--answer") ?? "none"
+            guard let answer = HeadlessStuckOfferOptions.Answer(rawValue: rawAnswer) else {
+                exitWithUsageError("--answer expects yes, no or none, got \(rawAnswer)")
+            }
+            options.answer = answer
+            options.fixtureImagePath = value(after: "--image")
+            options.fixtureImageRectInDisplayPoints = parseRect(after: "--image-rect")
+            options.framesDirectoryPath = value(after: "--frames-dir")
+            options.useLocalBrain = arguments.contains("--local")
+            options.receiptLines = (value(after: "--receipt-lines") ?? "").split(separator: "|").map(String.init)
+            if answer == .yes && options.fixtureImagePath == nil {
+                exitWithUsageError("--answer yes needs --image, so a scripted run never takes a real screenshot")
+            }
+            return .stuckOffer(options)
+        }
+
+        if let receiptOutputPath = value(after: "--headless-stuck-receipt-render") {
+            return .stuckReceiptRender(outputPath: receiptOutputPath, isEmpty: arguments.contains("--empty"))
+        }
+
         let headlessFlagWasMistyped = arguments.contains { $0.hasPrefix("--headless") }
         if headlessFlagWasMistyped {
             exitWithUsageError("unknown or incomplete headless command: \(arguments.dropFirst().joined(separator: " "))")
@@ -153,7 +195,7 @@ enum HeadlessCommand {
 
 // MARK: - Output
 
-private enum HeadlessOutput {
+enum HeadlessOutput {
     static var outputPath: String? {
         let arguments = CommandLine.arguments
         guard let flagIndex = arguments.firstIndex(of: "--output"), flagIndex + 1 < arguments.count else { return nil }
@@ -226,6 +268,14 @@ struct HeadlessCommandRunner {
             runWindowBounds(owningApplicationName: owningApplicationName)
         case .ask(let transcript):
             await runAsk(transcript: transcript)
+        case .stuckStatus:
+            await runStuckStatus()
+        case .stuckTapCheck:
+            await runStuckTapCheck()
+        case .stuckOffer(let options):
+            await runStuckOffer(options)
+        case .stuckReceiptRender(let outputPath, let isEmpty):
+            await runStuckReceiptRender(outputPath: outputPath, isEmpty: isEmpty)
         }
     }
 
@@ -275,6 +325,7 @@ struct HeadlessCommandRunner {
             "screenRecordingPreflight": screenRecordingPreflight,
             "realCapture": realCaptureResult,
             "accessibilityTrusted": accessibilityTrusted,
+            "inputMonitoringPreflight": CGPreflightListenEventAccess(),
             "microphone": microphoneStatus,
             "speechRecognition": speechRecognitionStatus,
             "missingPermissions": missingPermissions
@@ -393,10 +444,12 @@ struct HeadlessCommandRunner {
             ))
         }
 
+        let userPrompt = options.stuckReceiptLines.map { StuckHelpPrompt.makeUserPrompt(receiptLines: $0) } ?? options.userPrompt
+
         let brainRequest = BrainRequest(
             systemPrompt: CompanionManager.companionVoiceResponseSystemPrompt,
             conversationHistory: conversationHistory,
-            userPrompt: options.userPrompt,
+            userPrompt: userPrompt,
             images: CompanionManager.makeBrainImages(from: screenCaptures)
         )
 
@@ -872,7 +925,7 @@ struct GroundTruthImage {
 /// Builds a capture from a saved image, shaped exactly like a real one: a
 /// full-display frame at the same downscaled size. Everything after capture
 /// then runs unchanged, including the scaling that real captures go through.
-private enum FixtureScreenCapture {
+enum FixtureScreenCapture {
     struct FixtureError: LocalizedError {
         let message: String
         var errorDescription: String? { message }

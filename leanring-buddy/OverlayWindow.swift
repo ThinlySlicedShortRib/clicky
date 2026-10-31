@@ -94,6 +94,8 @@ enum BuddyNavigationMode {
     case navigatingToTarget
     /// Buddy has arrived at the target and is pointing at it with a speech bubble
     case pointingAtTarget
+    /// Buddy has quietly wandered over to offer help, and is waiting there
+    case offeringHelp
 }
 
 // SwiftUI view for the blue glowing cursor pointer.
@@ -164,6 +166,16 @@ struct BlueCursorView: View {
     /// True when the buddy is flying BACK to the cursor after pointing.
     /// Only during the return flight can cursor movement cancel the animation.
     @State private var isReturningToCursor: Bool = false
+
+    // MARK: - Stuck Offer State
+
+    /// 0 to 1, a slow pulse of the glow while waiting, so the buddy reads as
+    /// alive without anything moving.
+    @State private var offerBreathingAmount: CGFloat = 0
+    /// Extra glow while drifting, from StuckDriftPath's travel energy.
+    @State private var offerDriftGlow: CGFloat = 0
+    /// Added to the rotation by the little nod after a decline.
+    @State private var offerNodDegrees: Double = 0
 
     // MARK: - Onboarding Video Layout
 
@@ -310,8 +322,13 @@ struct BlueCursorView: View {
             Triangle()
                 .fill(DS.Colors.overlayCursorBlue)
                 .frame(width: 16, height: 16)
-                .rotationEffect(.degrees(triangleRotationDegrees))
-                .shadow(color: DS.Colors.overlayCursorBlue, radius: 8 + (buddyFlightScale - 1.0) * 20, x: 0, y: 0)
+                .rotationEffect(.degrees(triangleRotationDegrees + offerNodDegrees))
+                .shadow(
+                    color: DS.Colors.overlayCursorBlue,
+                    radius: 8 + (buddyFlightScale - 1.0) * 20 + offerDriftGlow * 6 + offerBreathingAmount * 7,
+                    x: 0,
+                    y: 0
+                )
                 .scaleEffect(buddyFlightScale)
                 .opacity(buddyIsVisibleOnThisScreen && (companionManager.voiceState == .idle || companionManager.voiceState == .responding) ? cursorOpacity : 0)
                 .position(cursorPosition)
@@ -323,7 +340,9 @@ struct BlueCursorView: View {
                 )
                 .animation(.easeIn(duration: 0.25), value: companionManager.voiceState)
                 .animation(
-                    buddyNavigationMode == .navigatingToTarget ? nil : .easeInOut(duration: 0.3),
+                    buddyNavigationMode == .navigatingToTarget || buddyNavigationMode == .offeringHelp
+                        ? nil
+                        : .easeInOut(duration: 0.3),
                     value: triangleRotationDegrees
                 )
 
@@ -389,6 +408,17 @@ struct BlueCursorView: View {
 
             startNavigatingToElement(screenLocation: screenLocation)
         }
+        .onChange(of: companionManager.stuckBuddyDriftTarget) { newDriftTarget in
+            if let newDriftTarget {
+                guard newDriftTarget.displayFrame == screenFrame else { return }
+                startDriftingToOffer(restingLocation: newDriftTarget.restingLocation)
+            } else if buddyNavigationMode == .offeringHelp {
+                driftBackToPointerAfterOffer()
+            }
+        }
+        .onChange(of: companionManager.stuckBuddyDeclineNodCount) { _ in
+            nodAfterDecline()
+        }
     }
 
     /// Whether the buddy triangle should be visible on this screen.
@@ -402,11 +432,12 @@ struct BlueCursorView: View {
         case .followingCursor:
             // If another screen's BlueCursorView is navigating to an element,
             // hide the cursor on this screen to prevent a duplicate buddy
-            if companionManager.detectedElementScreenLocation != nil {
+            if companionManager.detectedElementScreenLocation != nil
+                || companionManager.stuckBuddyDriftTarget != nil {
                 return false
             }
             return isCursorOnThisScreen
-        case .navigatingToTarget, .pointingAtTarget:
+        case .navigatingToTarget, .pointingAtTarget, .offeringHelp:
             return true
         }
     }
@@ -455,12 +486,101 @@ struct BlueCursorView: View {
         return CGPoint(x: x, y: y)
     }
 
+    // MARK: - Stuck Offer
+
+    /// Wanders from wherever the buddy is to its resting spot. This is the one
+    /// slow thing the buddy does, on purpose: the pointing flight is a swoop
+    /// because it was asked to go somewhere, and this is an unasked approach.
+    private func startDriftingToOffer(restingLocation: CGPoint) {
+        navigationAnimationTimer?.invalidate()
+        offerBreathingAmount = 0
+        buddyNavigationMode = .offeringHelp
+
+        let driftPath = StuckDriftPath(
+            startPosition: cursorPosition,
+            destination: convertScreenPointToSwiftUICoordinates(restingLocation)
+        )
+
+        let frameInterval: Double = 1.0 / 60.0
+        var elapsedSeconds: Double = 0
+
+        navigationAnimationTimer = Timer.scheduledTimer(withTimeInterval: frameInterval, repeats: true) { _ in
+            elapsedSeconds += frameInterval
+
+            let sample = driftPath.sample(atElapsedSeconds: elapsedSeconds)
+            self.cursorPosition = sample.position
+            self.triangleRotationDegrees = sample.rotationDegrees
+            self.offerDriftGlow = CGFloat(sample.travelEnergy)
+
+            guard elapsedSeconds >= driftPath.durationInSeconds else { return }
+
+            self.navigationAnimationTimer?.invalidate()
+            self.navigationAnimationTimer = nil
+            self.offerDriftGlow = 0
+            self.triangleRotationDegrees = StuckDriftPath.restingRotationDegrees
+
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                self.offerBreathingAmount = 1
+            }
+            self.companionManager.stuckBuddyDidArrive()
+        }
+    }
+
+    /// Follows the live pointer rather than a saved position, since the user
+    /// has probably moved it by now.
+    private func driftBackToPointerAfterOffer() {
+        navigationAnimationTimer?.invalidate()
+        offerDriftGlow = 0
+        withAnimation(.easeOut(duration: 0.3)) {
+            offerBreathingAmount = 0
+        }
+
+        let startPosition = cursorPosition
+        let returnDurationInSeconds: Double = 1.1
+        let frameInterval: Double = 1.0 / 60.0
+        var elapsedSeconds: Double = 0
+
+        navigationAnimationTimer = Timer.scheduledTimer(withTimeInterval: frameInterval, repeats: true) { _ in
+            elapsedSeconds += frameInterval
+
+            let linearProgress = min(elapsedSeconds / returnDurationInSeconds, 1)
+            let easedProgress = (1 - cos(linearProgress * .pi)) / 2
+
+            let pointerInSwiftUI = self.convertScreenPointToSwiftUICoordinates(NSEvent.mouseLocation)
+            let followPosition = CGPoint(x: pointerInSwiftUI.x + 35, y: pointerInSwiftUI.y + 25)
+
+            self.cursorPosition = CGPoint(
+                x: startPosition.x + (followPosition.x - startPosition.x) * easedProgress,
+                y: startPosition.y + (followPosition.y - startPosition.y) * easedProgress
+            )
+
+            if linearProgress >= 1 {
+                self.finishNavigationAndResumeFollowing()
+            }
+        }
+    }
+
+    /// A small dip of the head, so being told no reads as "got it".
+    private func nodAfterDecline() {
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.5)) {
+            offerNodDegrees = 12
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.65)) {
+                self.offerNodDegrees = 0
+            }
+        }
+    }
+
     // MARK: - Element Navigation
 
     /// Starts animating the buddy toward a detected UI element location.
     private func startNavigatingToElement(screenLocation: CGPoint) {
         // Don't interrupt welcome animation
         guard !showWelcome || welcomeText.isEmpty else { return }
+
+        offerBreathingAmount = 0
+        offerDriftGlow = 0
 
         // Convert the AppKit screen location to SwiftUI coordinates for this screen
         let targetInSwiftUI = convertScreenPointToSwiftUICoordinates(screenLocation)
@@ -603,13 +723,27 @@ struct BlueCursorView: View {
         streamNavigationBubbleCharacter(phrase: pointerPhrase, characterIndex: 0) {
             // All characters streamed — hold for 3 seconds, then fly back
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                guard self.buddyNavigationMode == .pointingAtTarget else { return }
-                self.navigationBubbleOpacity = 0.0
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    guard self.buddyNavigationMode == .pointingAtTarget else { return }
-                    self.startFlyingBackToCursor()
-                }
+                self.leaveTargetOnceStuckHelpEnds()
             }
+        }
+    }
+
+    /// A Stuck answer arrives unprompted, so the buddy stays on the target
+    /// until it has finished being spoken.
+    private func leaveTargetOnceStuckHelpEnds() {
+        guard buddyNavigationMode == .pointingAtTarget else { return }
+
+        if companionManager.isStuckHelpInProgress {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.leaveTargetOnceStuckHelpEnds()
+            }
+            return
+        }
+
+        navigationBubbleOpacity = 0.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            guard self.buddyNavigationMode == .pointingAtTarget else { return }
+            self.startFlyingBackToCursor()
         }
     }
 
@@ -851,6 +985,14 @@ class OverlayWindowManager {
     /// headless checks.
     var overlayWindowFrames: [CGRect] {
         overlayWindows.map(\.frame)
+    }
+
+    /// The overlay's own content views, so headless checks can ask them to
+    /// draw themselves, which needs no Screen Recording permission.
+    var overlayContentViewsForScriptedChecks: [(view: NSView, windowFrame: CGRect)] {
+        overlayWindows.compactMap { window in
+            window.contentView.map { ($0, window.frame) }
+        }
     }
 
     func isShowingOverlay() -> Bool {

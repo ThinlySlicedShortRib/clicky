@@ -15,7 +15,8 @@
 set -euo pipefail
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_PATH="$REPOSITORY_ROOT/build/DerivedData/Build/Products/Debug/Clicky.app"
+DERIVED_DATA_PATH="${CLICKY_DERIVED_DATA_PATH:-$REPOSITORY_ROOT/build/DerivedData}"
+APP_PATH="$DERIVED_DATA_PATH/Build/Products/Debug/Clicky.app"
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "error: $APP_PATH not found, run scripts/build-and-run.sh --build-only first" >&2

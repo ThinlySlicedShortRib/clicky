@@ -44,8 +44,9 @@ enum CompanionScreenCaptureUtility {
 
     /// Captures all connected displays as JPEG data, labeling each with
     /// whether the user's cursor is on that screen. This gives the AI
-    /// full context across multiple monitors.
-    static func captureAllScreensAsJPEG() async throws -> [CompanionScreenCapture] {
+    /// full context across multiple monitors. With `onlyCursorScreen`, takes
+    /// exactly one image, which is what a Stuck yes promises.
+    static func captureAllScreensAsJPEG(onlyCursorScreen: Bool = false) async throws -> [CompanionScreenCapture] {
         // The preflight alone can lag a fresh grant, so a failed preflight only
         // counts as "denied" once a real capture has also failed. Without it,
         // the capture failure would surface as a generic ScreenCaptureKit error.
@@ -98,9 +99,11 @@ enum CompanionScreenCaptureUtility {
             return false
         }
 
+        let displaysToCapture = onlyCursorScreen ? Array(sortedDisplays.prefix(1)) : sortedDisplays
+
         var capturedScreens: [CompanionScreenCapture] = []
 
-        for (displayIndex, display) in sortedDisplays.enumerated() {
+        for (displayIndex, display) in displaysToCapture.enumerated() {
             // Use NSScreen.frame (AppKit coordinates, bottom-left origin) so
             // displayFrame is in the same coordinate system as NSEvent.mouseLocation
             // and the overlay window's screenFrame in BlueCursorView.
@@ -139,12 +142,12 @@ enum CompanionScreenCaptureUtility {
             }
 
             let screenLabel: String
-            if sortedDisplays.count == 1 {
+            if displaysToCapture.count == 1 {
                 screenLabel = "user's screen (cursor is here)"
             } else if isCursorScreen {
-                screenLabel = "screen \(displayIndex + 1) of \(sortedDisplays.count) — cursor is on this screen (primary focus)"
+                screenLabel = "screen \(displayIndex + 1) of \(displaysToCapture.count) — cursor is on this screen (primary focus)"
             } else {
-                screenLabel = "screen \(displayIndex + 1) of \(sortedDisplays.count) — secondary screen"
+                screenLabel = "screen \(displayIndex + 1) of \(displaysToCapture.count) — secondary screen"
             }
 
             capturedScreens.append(CompanionScreenCapture(

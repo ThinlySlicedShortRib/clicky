@@ -191,7 +191,7 @@ private enum CLILocator {
     }
 }
 
-private enum BrainPromptFormatting {
+enum BrainPromptFormatting {
     static func conversationContextText(from conversationHistory: [BrainConversationExchange]) -> String? {
         guard !conversationHistory.isEmpty else { return nil }
         let exchangeLines = conversationHistory.map { exchange in
@@ -258,6 +258,7 @@ struct ClaudeCLIBrain: Brain {
     let modelIdentifier: String
 
     var displayName: String { "claude CLI (\(modelIdentifier))" }
+    var screenshotDestinationName: String { "anthropic" }
 
     private static let timeoutInSeconds: TimeInterval = 120
 
@@ -406,6 +407,7 @@ struct CodexCLIBrain: Brain {
     let modelIdentifier: String?
 
     var displayName: String { "codex CLI (\(modelIdentifier ?? "default model"))" }
+    var screenshotDestinationName: String { "openai" }
 
     private static let timeoutInSeconds: TimeInterval = 180
 

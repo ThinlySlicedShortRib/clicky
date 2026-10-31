@@ -64,6 +64,9 @@ final class CompanionManager: ObservableObject {
     let buddyDictationManager = BuddyDictationManager()
     let globalPushToTalkShortcutMonitor = GlobalPushToTalkShortcutMonitor()
     let overlayWindowManager = OverlayWindowManager()
+    /// Off until the user consents. Owns everything Stuck does.
+    private(set) lazy var stuckCompanion = StuckCompanion(companionManager: self)
+    private(set) lazy var stuckReceiptPanelManager = StuckReceiptPanelManager(stuckCompanion: stuckCompanion)
     // Response text is now displayed inline on the cursor overlay via
     // streamingResponseText, so no separate response overlay manager is needed.
 
@@ -109,6 +112,25 @@ final class CompanionManager: ObservableObject {
     /// is deliberately not persisted: a saved panel choice would silently
     /// override the BrainModel config value on the next launch.
     @Published var selectedModel: String = BrainConfiguration.configuredModelValue
+
+    // MARK: - Stuck Offer State
+
+    /// Set while the buddy should leave the pointer and drift to an offer.
+    /// Observed by BlueCursorView, and nil once the offer is over.
+    @Published private(set) var stuckBuddyDriftTarget: StuckBuddyDriftTarget?
+    /// Incremented to make the buddy give a small nod after a decline.
+    @Published private(set) var stuckBuddyDeclineNodCount = 0
+    /// While true the buddy keeps pointing until speech ends, because a Stuck
+    /// answer is spoken with no one having asked, so it needs to be followed.
+    private(set) var isStuckHelpInProgress = false
+
+    private var stuckBuddyArrivalHandler: (() -> Void)?
+    /// True if the overlay was only brought up for this offer.
+    private var didShowOverlayForStuckOffer = false
+
+    /// Replaces the real capture in `--headless-stuck-offer`, for machines
+    /// without Screen Recording. Only HeadlessCommandRunner sets this.
+    var stuckCaptureOverrideForScriptedCheck: (() throws -> [CompanionScreenCapture])?
 
     func setSelectedModel(_ model: String) {
         selectedModel = model
@@ -165,6 +187,7 @@ final class CompanionManager: ObservableObject {
         bindVoiceStateObservation()
         bindAudioPowerLevel()
         bindShortcutTransitions()
+        stuckCompanion.start()
 
         // If the user already completed onboarding AND all permissions are
         // still granted, show the cursor overlay immediately. If permissions
@@ -320,6 +343,7 @@ final class CompanionManager: ObservableObject {
     }
 
     func stop() {
+        stuckCompanion.stop()
         globalPushToTalkShortcutMonitor.stop()
         buddyDictationManager.cancelCurrentDictation()
         overlayWindowManager.hideOverlay()
@@ -509,6 +533,8 @@ final class CompanionManager: ObservableObject {
             // Don't register push-to-talk while the onboarding video is playing
             guard !showOnboardingVideo else { return }
 
+            stuckCompanion.dismissOfferForPushToTalk()
+
             // Cancel any pending transient hide so the overlay stays visible
             transientHideTask?.cancel()
             transientHideTask = nil
@@ -626,23 +652,36 @@ final class CompanionManager: ObservableObject {
     /// the spinner/processing state until TTS audio begins playing.
     /// Claude's response may include a [POINT:x,y:label] tag which triggers
     /// the buddy to fly to that element on screen.
-    private func sendTranscriptToClaudeWithScreenshot(transcript: String) {
+    ///
+    /// `stuckHelpRequest` is set when this comes from a yes on a Stuck offer,
+    /// which changes three things: one screenshot of one screen, the Brain the
+    /// user chose for Stuck, and a redacted history entry.
+    private func sendTranscriptToClaudeWithScreenshot(transcript: String, stuckHelpRequest: StuckHelpRequest? = nil) {
         currentResponseTask?.cancel()
         textToSpeechClient.stopPlayback()
 
         currentResponseTask = Task {
+            defer { stuckHelpRequest?.onFinished() }
+
             // Stay in processing (spinner) state — no streaming text displayed
             voiceState = .processing
             lastResponseFailureMessage = nil
 
+            let responseBrain = stuckHelpRequest?.brain ?? brain
+
             do {
-                // Capture all connected screens so the AI has full context
-                let screenCaptures = try await CompanionScreenCaptureUtility.captureAllScreensAsJPEG()
+                let screenCaptures: [CompanionScreenCapture]
+                if let stuckHelpRequest {
+                    screenCaptures = try await captureForStuckHelp(stuckHelpRequest)
+                } else {
+                    // Capture all connected screens so the AI has full context
+                    screenCaptures = try await CompanionScreenCaptureUtility.captureAllScreensAsJPEG()
+                }
 
                 guard !Task.isCancelled else { return }
 
                 // Pass conversation history so Claude remembers prior exchanges
-                let brainResponse = try await brain.respond(
+                let brainResponse = try await responseBrain.respond(
                     to: BrainRequest(
                         systemPrompt: Self.companionVoiceResponseSystemPrompt,
                         conversationHistory: conversationHistory,
@@ -696,7 +735,7 @@ final class CompanionManager: ObservableObject {
                 // Save this exchange to conversation history (with the point tag
                 // stripped so it doesn't confuse future context)
                 conversationHistory.append(BrainConversationExchange(
-                    userTranscript: transcript,
+                    userTranscript: stuckHelpRequest == nil ? transcript : StuckHelpPrompt.conversationHistoryLabel,
                     assistantResponse: spokenText
                 ))
 
@@ -734,6 +773,135 @@ final class CompanionManager: ObservableObject {
                 voiceState = .idle
                 scheduleTransientHideIfNeeded()
             }
+        }
+    }
+
+    // MARK: - Stuck Help
+
+    /// What's different about a reply that came from a yes on a Stuck offer.
+    private struct StuckHelpRequest {
+        let brain: any Brain
+        let onCaptureStarting: () -> Void
+        let onScreenshotTaken: () -> Void
+        let onFinished: () -> Void
+    }
+
+    /// Takes the single screenshot. The flash starts first and overlaps the
+    /// capture, so the user sees it happen rather than being told afterwards.
+    private func captureForStuckHelp(_ stuckHelpRequest: StuckHelpRequest) async throws -> [CompanionScreenCapture] {
+        stuckHelpRequest.onCaptureStarting()
+
+        // Lets the flash reach the screen. Own windows are excluded from the
+        // capture, so it won't appear in the image.
+        try await Task.sleep(nanoseconds: 120_000_000)
+
+        let screenCaptures: [CompanionScreenCapture]
+        if let stuckCaptureOverrideForScriptedCheck {
+            screenCaptures = try stuckCaptureOverrideForScriptedCheck()
+        } else {
+            screenCaptures = try await CompanionScreenCaptureUtility.captureAllScreensAsJPEG(onlyCursorScreen: true)
+        }
+
+        stuckHelpRequest.onScreenshotTaken()
+        return screenCaptures
+    }
+
+    /// Runs normal Clicky help for a yes. Called only by StuckCompanion.acceptOffer.
+    func runStuckHelp(
+        receiptLinesAtYes: [String],
+        brain helpBrain: any Brain,
+        onCaptureStarting: @escaping () -> Void,
+        onScreenshotTaken: @escaping () -> Void,
+        onFinished: @escaping () -> Void
+    ) {
+        isStuckHelpInProgress = true
+
+        sendTranscriptToClaudeWithScreenshot(
+            transcript: StuckHelpPrompt.makeUserPrompt(receiptLines: receiptLinesAtYes),
+            stuckHelpRequest: StuckHelpRequest(
+                brain: helpBrain,
+                onCaptureStarting: onCaptureStarting,
+                onScreenshotTaken: onScreenshotTaken,
+                onFinished: { [weak self] in
+                    self?.finishStuckHelpOnceSpeechEnds(then: onFinished)
+                }
+            )
+        )
+    }
+
+    /// The reply task ends when speech starts, but the buddy has to stay on
+    /// the answer until it's been said.
+    private func finishStuckHelpOnceSpeechEnds(then onFinished: @escaping () -> Void) {
+        Task {
+            while textToSpeechClient.isPlaying {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+            }
+            isStuckHelpInProgress = false
+            onFinished()
+        }
+    }
+
+    func setOverlayVisibleForScriptedCheck() {
+        overlayWindowManager.hasShownOverlayBefore = true
+        overlayWindowManager.showOverlay(onScreens: NSScreen.screens, companionManager: self)
+        isOverlayVisible = true
+    }
+
+    /// Brings the buddy up if it isn't on screen, and starts its drift.
+    /// `onArrival` runs when it has settled.
+    func presentBuddyForStuckOffer(_ driftTarget: StuckBuddyDriftTarget, onArrival: @escaping () -> Void) {
+        transientHideTask?.cancel()
+        transientHideTask = nil
+        stuckBuddyArrivalHandler = onArrival
+
+        guard isOverlayVisible else {
+            didShowOverlayForStuckOffer = true
+            overlayWindowManager.hasShownOverlayBefore = true
+            overlayWindowManager.showOverlay(onScreens: NSScreen.screens, companionManager: self)
+            isOverlayVisible = true
+
+            // BlueCursorView only reacts to changes once it has mounted.
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                stuckBuddyDriftTarget = driftTarget
+            }
+            return
+        }
+
+        stuckBuddyDriftTarget = driftTarget
+    }
+
+    /// Called by BlueCursorView when the drift has finished.
+    func stuckBuddyDidArrive() {
+        let arrivalHandler = stuckBuddyArrivalHandler
+        stuckBuddyArrivalHandler = nil
+        arrivalHandler?()
+    }
+
+    func nodBuddyAfterStuckDecline() {
+        stuckBuddyDeclineNodCount += 1
+    }
+
+    /// Ends the offer: the buddy drifts home, and the overlay goes away again
+    /// if it was only here for this.
+    func releaseBuddyAfterStuckOffer() {
+        stuckBuddyArrivalHandler = nil
+        stuckBuddyDriftTarget = nil
+
+        guard didShowOverlayForStuckOffer else {
+            scheduleTransientHideIfNeeded()
+            return
+        }
+        didShowOverlayForStuckOffer = false
+
+        Task {
+            // Leaves time for the buddy to reach the pointer before fading.
+            try? await Task.sleep(nanoseconds: 1_400_000_000)
+            while detectedElementScreenLocation != nil {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+            }
+            overlayWindowManager.fadeOutAndHideOverlay()
+            isOverlayVisible = false
         }
     }
 

@@ -69,6 +69,9 @@ final class MenuBarPanelManager: NSObject {
         button.image?.isTemplate = true
         button.action = #selector(statusItemClicked)
         button.target = self
+        // Right-click goes straight to the receipt, so what Clicky knows is
+        // always one click away, even when the panel is closed.
+        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
 
     /// Draws the clicky triangle as a menu bar icon. Uses the same shape
@@ -117,6 +120,11 @@ final class MenuBarPanelManager: NSObject {
     }
 
     @objc private func statusItemClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            companionManager.stuckReceiptPanelManager.toggle()
+            return
+        }
+
         if let panel, panel.isVisible {
             hidePanel()
         } else {

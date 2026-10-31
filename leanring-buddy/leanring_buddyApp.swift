@@ -63,6 +63,16 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
 
         menuBarPanelManager = MenuBarPanelManager(companionManager: companionManager)
         companionManager.start()
+
+        // For scripts/demo-stuck.sh and scripts/prove-privacy.sh, which print
+        // the consent sentence first. Neither flag can inject an event.
+        if CommandLine.arguments.contains("--enable-stuck") {
+            companionManager.stuckCompanion.setEnabled(true)
+        }
+        if CommandLine.arguments.contains("--show-stuck-receipt") {
+            companionManager.stuckReceiptPanelManager.show()
+        }
+
         // Auto-open the panel if the user still needs to do something:
         // either they haven't onboarded yet, or permissions were revoked.
         if !companionManager.hasCompletedOnboarding || !companionManager.allPermissionsGranted {

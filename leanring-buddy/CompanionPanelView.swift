@@ -41,6 +41,15 @@ struct CompanionPanelView: View {
                     .padding(.horizontal, 16)
             }
 
+            Spacer()
+                .frame(height: 14)
+
+            StuckPanelSection(
+                stuckCompanion: companionManager.stuckCompanion,
+                onOpenReceipt: { companionManager.stuckReceiptPanelManager.toggle() }
+            )
+            .padding(.horizontal, 16)
+
             if !companionManager.hasCompletedOnboarding && companionManager.allPermissionsGranted {
                 Spacer()
                     .frame(height: 16)
@@ -758,4 +767,112 @@ struct CompanionPanelView: View {
         }
     }
 
+}
+
+// MARK: - Stuck
+
+/// The consent lives here, as one sentence, and Stuck can't start without it.
+private struct StuckPanelSection: View {
+    @ObservedObject var stuckCompanion: StuckCompanion
+    let onOpenReceipt: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "hand.wave")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DS.Colors.textTertiary)
+                        .frame(width: 16)
+
+                    Text("notice when i'm stuck")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(DS.Colors.textSecondary)
+                }
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { stuckCompanion.isEnabled },
+                    set: { stuckCompanion.setEnabled($0) }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .tint(DS.Colors.accent)
+                .scaleEffect(0.8)
+                .pointerCursor()
+            }
+
+            if !stuckCompanion.isEnabled {
+                Text(StuckCompanion.consentSentence)
+                    .font(.system(size: 11))
+                    .foregroundColor(DS.Colors.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                if stuckCompanion.watchingStatus == .needsPermission
+                    || stuckCompanion.watchingStatus == .watchingMouseOnly {
+                    needsPermissionNote
+                }
+
+                keepItLocalRow
+
+                Button(action: onOpenReceipt) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "doc.plaintext")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("see what clicky knows right now")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(DS.Colors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .pointerCursor()
+            }
+        }
+    }
+
+    private var needsPermissionNote: some View {
+        Button(action: {
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+                NSWorkspace.shared.open(url)
+            }
+        }) {
+            Text("needs input monitoring to see undos. open settings.")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(DS.Colors.warning)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .pointerCursor()
+    }
+
+    private var keepItLocalRow: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text("answer on this mac (ollama)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DS.Colors.textSecondary)
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { stuckCompanion.usesLocalBrain },
+                    set: { stuckCompanion.setUsesLocalBrain($0) }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .tint(DS.Colors.accent)
+                .scaleEffect(0.7)
+                .pointerCursor()
+            }
+
+            Text(stuckCompanion.usesLocalBrain
+                 ? "your screenshot stays here. slower, and it points less well."
+                 : "saying yes sends one screenshot to the model provider.")
+                .font(.system(size: 10))
+                .foregroundColor(DS.Colors.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 }

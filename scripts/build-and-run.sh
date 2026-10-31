@@ -15,7 +15,8 @@ set -euo pipefail
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SIGNING_IDENTITY="Apple Development: Yi Hsiang Chen (KNT3H5Z889)"
-DERIVED_DATA_PATH="$REPOSITORY_ROOT/build/DerivedData"
+# CLICKY_DERIVED_DATA_PATH lets parallel worktrees build without colliding.
+DERIVED_DATA_PATH="${CLICKY_DERIVED_DATA_PATH:-$REPOSITORY_ROOT/build/DerivedData}"
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/Debug/Clicky.app"
 
 # Shared across checkouts so each worktree doesn't clone Sparkle again.
