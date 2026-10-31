@@ -1,0 +1,45 @@
+Building Clicky (Debug)...
+Built and signed: /tmp/clicky-dd-show-me-once/Build/Products/Debug/Clicky.app
+Demo documents: /Users/sean/Library/Application Support/Clicky/Demo
+{
+  "accessibilityTrusted" : false,
+  "brainModel" : "claude-sonnet-5-5",
+  "bundlePath" : "/private/tmp/clicky-dd-show-me-once/Build/Products/Debug/Clicky.app",
+  "lessonFileHandler" : null,
+  "lessonFilesOpenInThisBuild" : false,
+  "microphone" : "not_determined",
+  "missingForFollowing" : [
+    "Screen & System Audio Recording"
+  ],
+  "missingForQuestions" : [
+    "Screen & System Audio Recording",
+    "Accessibility",
+    "Microphone"
+  ],
+  "missingForTeaching" : [
+    "Screen & System Audio Recording",
+    "Accessibility",
+    "Microphone"
+  ],
+  "screenCapture" : "failed: Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-show-me-once/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "speechOnDeviceSupported" : true,
+  "speechRecognition" : "authorized",
+  "status" : "permissions_missing"
+}
+
+Warning: double-clicking a .clicky file won't open this build. Usually that's
+other copies of Clicky built on this Mac, which share its bundle id. Either:
+  - remove them: /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u <path to the other Clicky.app>
+  - or drop the file on the panel, use its "open lesson" button, or --follow
+
+Not ready. Permissions are missing, and only you can grant them, for this app:
+
+    /tmp/clicky-dd-show-me-once/Build/Products/Debug/Clicky.app
+
+  System Settings > Privacy & Security, then each of:
+    Screen & System Audio Recording   add the app if it isn't listed, then quit and relaunch it
+    Accessibility                     add the app if it isn't listed
+    Microphone                        allow when prompted
+    Speech Recognition                allow when prompted
+
+Then run this script again.

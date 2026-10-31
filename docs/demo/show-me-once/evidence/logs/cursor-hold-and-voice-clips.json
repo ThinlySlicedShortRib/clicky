@@ -1,0 +1,19 @@
+{
+  "flightSeconds" : 1.1699999999999999,
+  "heldAfterLanding" : true,
+  "note" : "the audio files were loaded, not played aloud, and no pixels were captured",
+  "releasedWhenAsked" : true,
+  "repeatPointAtSameSpotWorked" : true,
+  "status" : "ok",
+  "stillHolding" : true,
+  "stillHoldingAfterSeconds" : 7,
+  "unplayableClips" : [
+
+  ],
+  "voiceClipDurationsInSeconds" : {
+    "step-1.m4a" : 5.2000000000000002,
+    "step-2.m4a" : 6.7300000000000004,
+    "step-3.m4a" : 7.6299999999999999,
+    "step-4.m4a" : 2.8599999999999999
+  }
+}

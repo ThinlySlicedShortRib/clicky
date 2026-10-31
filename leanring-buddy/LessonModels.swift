@@ -284,6 +284,9 @@ struct ClickyLesson: Codable, Equatable {
     /// Said before step one. Assumes nothing about the follower's screen.
     let openingLine: String
     let closingLine: String
+    /// The teacher's actual voice for those two lines, when it can be found.
+    let openingVoiceClipFileName: String?
+    let closingVoiceClipFileName: String?
     /// Everything the teacher said, for answering follow-up questions.
     let teacherNarrationTranscript: String
     let taughtOnSetup: LessonSetupDescription

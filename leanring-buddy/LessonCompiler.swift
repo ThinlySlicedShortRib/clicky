@@ -19,14 +19,14 @@ import Foundation
 struct TeachActionNarration: Equatable {
     let actionIndex: Int
     let narrationText: String
-    let narrationStartSeconds: Double?
-    let narrationEndSeconds: Double?
+    let narrationSegments: [TeachNarrationSegment]
 }
 
 struct TeachNarrationAlignment: Equatable {
     let actionNarrations: [TeachActionNarration]
     /// What the teacher said after their last action, usually a sign-off.
     let trailingNarrationText: String
+    let trailingNarrationSegments: [TeachNarrationSegment]
     let fullTranscript: String
 }
 
@@ -62,14 +62,14 @@ enum TeachNarrationAligner {
             return TeachActionNarration(
                 actionIndex: actionIndex,
                 narrationText: joinedText(of: actionSegments),
-                narrationStartSeconds: actionSegments.first?.startSeconds,
-                narrationEndSeconds: actionSegments.last?.endSeconds
+                narrationSegments: actionSegments
             )
         }
 
         return TeachNarrationAlignment(
             actionNarrations: actionNarrations,
             trailingNarrationText: joinedText(of: trailingSegments),
+            trailingNarrationSegments: trailingSegments,
             fullTranscript: joinedText(of: usableSegments)
         )
     }
@@ -113,6 +113,19 @@ enum TeacherWordOverlap {
         let narrationWords = Set(words(in: narration))
         let sharedWordCount = lineWords.filter { narrationWords.contains($0) }.count
         return Double(sharedWordCount) / Double(lineWords.count)
+    }
+
+    /// The phrases a spoken line was really built from. A step's narration can
+    /// also hold the teacher's introduction, which has its own line, and a clip
+    /// of everything would make the follower hear that sentence twice.
+    static func segmentsSpokenInLine(_ line: String, from segments: [TeachNarrationSegment]) -> [TeachNarrationSegment] {
+        let lineWords = Set(words(in: line))
+        return segments.filter { segment in
+            let segmentWords = words(in: segment.text)
+            guard !segmentWords.isEmpty else { return false }
+            let sharedWordCount = segmentWords.filter { lineWords.contains($0) }.count
+            return Double(sharedWordCount) / Double(segmentWords.count) >= minimumOverlapToKeepModelLine
+        }
     }
 
     /// Keeps the model's tidied line only if it's still recognisably the
@@ -344,6 +357,27 @@ struct LessonCompiler {
             packageDirectoryURL: packageDirectoryURL
         )
 
+        let openingLine = Self.nonEmpty(lessonDraft.openingLine) ?? ""
+        let closingLine = Self.nonEmpty(lessonDraft.closingLine) ?? ""
+
+        let openingVoiceClipFileName = writeVoiceClip(
+            named: "opening.m4a",
+            narrationSegments: TeacherWordOverlap.segmentsSpokenInLine(
+                openingLine,
+                from: alignment.actionNarrations.first?.narrationSegments ?? []
+            ),
+            recording: recording,
+            recordingDirectoryURL: recordingDirectoryURL,
+            packageDirectoryURL: packageDirectoryURL
+        )
+        let closingVoiceClipFileName = writeVoiceClip(
+            named: "closing.m4a",
+            narrationSegments: TeacherWordOverlap.segmentsSpokenInLine(closingLine, from: alignment.trailingNarrationSegments),
+            recording: recording,
+            recordingDirectoryURL: recordingDirectoryURL,
+            packageDirectoryURL: packageDirectoryURL
+        )
+
         let recordedApplicationName = recording.actions.compactMap(\.applicationName).first
         let lesson = ClickyLesson(
             lessonIdentifier: UUID().uuidString,
@@ -354,8 +388,10 @@ struct LessonCompiler {
             provenance: recording.provenance,
             applicationName: recordedApplicationName ?? Self.nonEmpty(lessonDraft.applicationName) ?? "the app",
             applicationBundleIdentifier: recording.actions.compactMap(\.applicationBundleIdentifier).first,
-            openingLine: Self.nonEmpty(lessonDraft.openingLine) ?? "",
-            closingLine: Self.nonEmpty(lessonDraft.closingLine) ?? "",
+            openingLine: openingLine,
+            closingLine: closingLine,
+            openingVoiceClipFileName: openingVoiceClipFileName,
+            closingVoiceClipFileName: closingVoiceClipFileName,
             teacherNarrationTranscript: alignment.fullTranscript,
             taughtOnSetup: recording.setup,
             steps: lessonSteps,
@@ -545,8 +581,11 @@ struct LessonCompiler {
             let voiceClipFileName = usesDocumentSpecificWords
                 ? nil
                 : writeVoiceClip(
-                    forStepNumber: stepNumber,
-                    stepNarrations: stepNarrations,
+                    named: "step-\(stepNumber).m4a",
+                    narrationSegments: TeacherWordOverlap.segmentsSpokenInLine(
+                        chosenLine.spokenLine,
+                        from: stepNarrations.flatMap(\.narrationSegments)
+                    ),
                     recording: recording,
                     recordingDirectoryURL: recordingDirectoryURL,
                     packageDirectoryURL: packageDirectoryURL
@@ -612,19 +651,18 @@ struct LessonCompiler {
     }
 
     private func writeVoiceClip(
-        forStepNumber stepNumber: Int,
-        stepNarrations: [TeachActionNarration],
+        named clipFileName: String,
+        narrationSegments: [TeachNarrationSegment],
         recording: TeachRecording,
         recordingDirectoryURL: URL,
         packageDirectoryURL: URL
     ) -> String? {
         guard let narrationAudioFileName = recording.narrationAudioFileName,
-              let clipStartSeconds = stepNarrations.compactMap(\.narrationStartSeconds).min(),
-              let clipEndSeconds = stepNarrations.compactMap(\.narrationEndSeconds).max() else {
+              let clipStartSeconds = narrationSegments.map(\.startSeconds).min(),
+              let clipEndSeconds = narrationSegments.map(\.endSeconds).max() else {
             return nil
         }
 
-        let clipFileName = "step-\(stepNumber).m4a"
         let clipURL = packageDirectoryURL
             .appendingPathComponent(ClickyLesson.voiceDirectoryName, isDirectory: true)
             .appendingPathComponent(clipFileName)
@@ -638,7 +676,7 @@ struct LessonCompiler {
             )
             return clipFileName
         } catch {
-            print("⚠️ Show Me Once: voice clip for step \(stepNumber) failed: \(error.localizedDescription)")
+            print("⚠️ Show Me Once: voice clip \(clipFileName) failed: \(error.localizedDescription)")
             return nil
         }
     }

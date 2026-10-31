@@ -1,0 +1,74 @@
+{
+  "onDeviceSupported" : true,
+  "recognitionError" : null,
+  "recognizerLocale" : "en-US",
+  "seconds" : 8.6999999999999993,
+  "segments" : [
+    {
+      "endSeconds" : 3.2400000000000002,
+      "startSeconds" : 0,
+      "text" : "OK, so this is how you change how long your animation is"
+    },
+    {
+      "endSeconds" : 5.1299999999999999,
+      "startSeconds" : 3.3300000000000001,
+      "text" : "it took me ages to find this"
+    },
+    {
+      "endSeconds" : 8.2799999999999994,
+      "startSeconds" : 5.6399999999999997,
+      "text" : "first go up to the top and click animation."
+    },
+    {
+      "endSeconds" : 10.44,
+      "startSeconds" : 8.2799999999999994,
+      "text" : "That's the tab with all the timing stuff"
+    },
+    {
+      "endSeconds" : 13.890000000000001,
+      "startSeconds" : 10.950000000000001,
+      "text" : "then over on the right see this little printer icon."
+    },
+    {
+      "endSeconds" : 15.540000000000001,
+      "startSeconds" : 13.890000000000001,
+      "text" : "I know it looks like a printer."
+    },
+    {
+      "endSeconds" : 17.280000000000001,
+      "startSeconds" : 15.540000000000001,
+      "text" : "Trust me that's output"
+    },
+    {
+      "endSeconds" : 20.82,
+      "startSeconds" : 17.760000000000002,
+      "text" : "now find frame range click the end number and"
+    },
+    {
+      "endSeconds" : 21.990000000000002,
+      "startSeconds" : 20.82,
+      "text" : "type how long you want."
+    },
+    {
+      "endSeconds" : 24.990000000000002,
+      "startSeconds" : 21.990000000000002,
+      "text" : "I always do 1 20 because that's five seconds"
+    },
+    {
+      "endSeconds" : 26.310000000000002,
+      "startSeconds" : 24.990000000000002,
+      "text" : "of 2 4 frames"
+    },
+    {
+      "endSeconds" : 29.280000000000001,
+      "startSeconds" : 26.82,
+      "text" : "then go back to layout and you're done."
+    },
+    {
+      "endSeconds" : 31.68,
+      "startSeconds" : 29.280000000000001,
+      "text" : "that's it nice and easy."
+    }
+  ],
+  "status" : "ok"
+}

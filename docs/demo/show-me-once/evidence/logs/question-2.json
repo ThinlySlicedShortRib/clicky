@@ -1,0 +1,19 @@
+{
+  "captureSource" : "fixture",
+  "question" : "what does the step field underneath do?",
+  "spokenAnswer" : "sean didn't cover the step field in the lesson, so this part is from me. it's set to one right now, which means blender renders every frame. a higher number skips frames, so two would render every other one.\n\nfor where you are now, click that end number, which is at 480, and type in the length you want. sean uses one twenty.",
+  "status" : "ok",
+  "usage" : {
+    "backendName" : "claude CLI",
+    "cacheCreationInputTokens" : 1926,
+    "cacheReadInputTokens" : 2037,
+    "costInUSD" : 0.010451,
+    "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+    "inputTokens" : 2,
+    "isCostEstimated" : true,
+    "modelIdentifier" : "claude-sonnet-5-5",
+    "outputTokens" : 241,
+    "timeToFirstTextInSeconds" : 2.4767800569534302,
+    "totalDurationInSeconds" : 4.1186079978942871
+  }
+}

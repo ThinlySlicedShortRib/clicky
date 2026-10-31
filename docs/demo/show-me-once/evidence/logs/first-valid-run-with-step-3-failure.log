@@ -1,0 +1,20 @@
+taking the GUI lock for Blender...
+walking the teacher's Blender (dark, 1100x720, default cube)...
+  window at {'x': 150, 'y': 142, 'width': 1100, 'height': 720}
+walking the follower's Blender (light, 1400x840, suzanne and a torus)...
+  window at {'x': 40, 'y': 82, 'width': 1400, 'height': 840}
+  teach: every frame shows its state (read back by OCR)
+  follow: every frame shows its state (read back by OCR)
+building the synthetic recording...
+compiling with the real model...
+{"status": "ok", "error": null, "stepCount": 4, "archiveSizeInBytes": 229067, "compileSeconds": 13.8}
+following on the different setup...
+{"status": "verification_failed", "error": null, "failedStepCount": 1, "unverifiedStepCount": 0, "modelCallCount": 10, "totalCostInUSDEstimated": 0.08258969999999999}
+  step 1: open the animation workspace tab
+    landed: True  check before: False after: True (onDeviceText)  changed tiles: 474  adapted: None
+  step 2: open the output properties tab
+    landed: True  check before: False after: True (onDeviceText)  changed tiles: 77  adapted: None
+  step 3: set the end frame of the frame range
+    landed: False  check before: False after: False (modelVision)  changed tiles: 63  adapted: None
+  step 4: go back to the layout workspace
+    landed: True  check before: False after: True (modelVision)  changed tiles: 553  adapted: None

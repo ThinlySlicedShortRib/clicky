@@ -1,0 +1,5 @@
+before
+{"owningApplicationName":"Numbers","status":"failed","windowBoundsTopLeftOrigin":[]}
+open exit 0
+after
+{"owningApplicationName":"Numbers","status":"ok","windowBoundsTopLeftOrigin":[{"height":949,"width":1260,"x":126,"y":33}]}

@@ -95,6 +95,7 @@ Before every take:
 - [ ] Do Not Disturb on. Dock hidden. Desktop clear. Other apps quit.
 - [ ] The filmed screen is 16:9. A 1512x982 MacBook isn't, so use an external 1920x1080 display, or record a 1512x850 region with the menu bar and toolbar inside it.
 - [ ] Mic checked by saying one sentence into a test teach. A failed start shows in the Clicky panel.
+- [ ] Double-clicking a `.clicky` opens Clicky. If the script warned that it won't, deal with that first: the fix is in its message.
 - [ ] Numbers has only the demo document open.
 
 Redo the take if:
@@ -121,6 +122,6 @@ Honesty, on every take:
 
 The evidence is in [`evidence/`](evidence/). See [`evidence/README.md`](evidence/README.md) for the numbers and how they were produced.
 
-**Not run yet, because macOS permissions block it:** live teach mode, live follow mode, the push-to-talk question, real ScreenCaptureKit capture, and anything inside Numbers. I also couldn't open Numbers' UI at all, so its layout here comes from its own bundled text and from general knowledge of the app. Treat the steps in scene 2 as a plan. If Numbers behaves differently, follow what it really does: the lesson learns from the take, not from this file.
+**Not run yet, because macOS permissions block it:** live teach mode, live follow mode, the push-to-talk question, real ScreenCaptureKit capture, and anything inside Numbers. All that's confirmed about Numbers is that it opens the demo CSV in a window. Its layout here comes from its own bundled text and from general knowledge of the app. Treat the steps in scene 2 as a plan. If Numbers behaves differently, follow what it really does: the lesson learns from the take, not from this file.
 
 **First thing to do after granting permissions:** one full private dry run of scenes 2, 4 and 5, then `scripts/demo-show-me-once.sh --check-pointing` with Numbers in front. If anything fails, fix that before setting up a camera.

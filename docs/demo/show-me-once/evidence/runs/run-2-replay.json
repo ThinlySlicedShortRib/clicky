@@ -1,0 +1,184 @@
+{
+ "capturePathNote": "saved window exports placed where the window server says the window is: ScreenCaptureKit was not exercised by this run",
+ "captureSource": "fixture",
+ "controlCallCount": 8,
+ "controlCostInUSDEstimatedExcludedFromTotal": 0.06037359999999999,
+ "costIsEstimated": true,
+ "costSource": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+ "failedStepCount": 0,
+ "lessonProvenance": "syntheticRecording",
+ "model": "claude-sonnet-5-5",
+ "modelCallCount": 6,
+ "setup": "follower: 1400x840 window, light theme, suzanne and a torus instead of the default cube, 480 frames instead of 250. teacher: 1100x720 window, dark theme, default cube.",
+ "status": "ok",
+ "stepCount": 4,
+ "steps": [
+  {
+   "adaptedLine": null,
+   "changedTilesBeforeToAfter": 474,
+   "checkAfterAction": {
+    "explanation": "\"Dope Sheet\" appeared on screen",
+    "method": "onDeviceText",
+    "passed": true
+   },
+   "checkAfterWrongChange": {
+    "explanation": "layout workspace still active; only end frame changed",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checkBeforeAction": {
+    "explanation": "layout workspace still active, screen unchanged",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checksCorrect": true,
+   "intent": "open the animation workspace",
+   "landedOnTarget": true,
+   "locateCostInUSD": 0.0105685,
+   "locateMethod": "modelVision",
+   "pointInDisplayPoints": {
+    "x": 738.28,
+    "y": 94.54
+   },
+   "rawLocateResponse": "LINE: SAME\n[POINT:625,80:animation]",
+   "stepNumber": 1,
+   "textVerification": {
+    "distanceToBoxCenterInPoints": 1.85,
+    "hit": true,
+    "occurrencesFound": 2,
+    "ocrBoxInDisplayPoints": {
+     "height": 10.169490814208949,
+     "width": 52.90697479248049,
+     "x": 713.546513265097,
+     "y": 90.13559349967518
+    },
+    "text": "Animation"
+   }
+  },
+  {
+   "adaptedLine": null,
+   "changedTilesBeforeToAfter": 77,
+   "checkAfterAction": {
+    "explanation": "\"Format\" appeared on screen",
+    "method": "onDeviceText",
+    "passed": true
+   },
+   "checkAfterWrongChange": {
+    "explanation": "properties panel still shows object transform settings, not output",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checkBeforeAction": {
+    "explanation": "screens identical; properties panel still shows object transform settings",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checksCorrect": true,
+   "intent": "open the output properties tab",
+   "landedOnTarget": true,
+   "locateCostInUSD": 0.011814,
+   "locateMethod": "modelVision",
+   "pointInDisplayPoints": {
+    "x": 1207.24,
+    "y": 367.51
+   },
+   "rawLocateResponse": "LINE: SAME\n[POINT:1022,311:output tab]",
+   "rectVerification": {
+    "hit": true,
+    "rectInDisplayPoints": {
+     "height": 28,
+     "width": 29,
+     "x": 1192,
+     "y": 354
+    }
+   },
+   "stepNumber": 2
+  },
+  {
+   "adaptedLine": null,
+   "changedTilesBeforeToAfter": 63,
+   "checkAfterAction": {
+    "explanation": "frame range end changed 480 to 120; timeline end shows 120",
+    "method": "modelVision",
+    "passed": true
+   },
+   "checkAfterWrongChange": {
+    "explanation": "end frame still 480; properties tab switched, no change",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checkBeforeAction": {
+    "explanation": "end frame still 480 in both screenshots, unchanged",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checksCorrect": true,
+   "intent": "set the end frame to a new value",
+   "landedOnTarget": true,
+   "locateCostInUSD": 0.0119921,
+   "locateMethod": "modelVision",
+   "pointInDisplayPoints": {
+    "x": 1367.89,
+    "y": 600.31
+   },
+   "rawLocateResponse": "LINE: SAME\n[POINT:1158,508:end frame]",
+   "stepNumber": 3,
+   "textVerification": {
+    "distanceToBoxCenterInPoints": 1.12,
+    "hit": true,
+    "occurrencesFound": 2,
+    "ocrBoxInDisplayPoints": {
+     "height": 10.1694917678833,
+     "width": 24.418603897094783,
+     "x": 1356.5697677263997,
+     "y": 594.5423727139012
+    },
+    "text": "480"
+   }
+  },
+  {
+   "adaptedLine": null,
+   "changedTilesBeforeToAfter": 553,
+   "checkAfterAction": {
+    "explanation": "layout tab active, large viewport with left toolbar visible",
+    "method": "modelVision",
+    "passed": true
+   },
+   "checkAfterWrongChange": {
+    "explanation": "still in Animation workspace; only frame end changed",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checkBeforeAction": {
+    "explanation": "screen unchanged; animation workspace still active, not layout",
+    "method": "modelVision",
+    "passed": false
+   },
+   "checksCorrect": true,
+   "intent": "return to the layout workspace",
+   "landedOnTarget": true,
+   "locateCostInUSD": 0.0105372,
+   "locateMethod": "modelVision",
+   "pointInDisplayPoints": {
+    "x": 318.94,
+    "y": 94.54
+   },
+   "rawLocateResponse": "LINE: SAME\n[POINT:270,80:layout]",
+   "stepNumber": 4,
+   "textVerification": {
+    "distanceToBoxCenterInPoints": 1.91,
+    "hit": true,
+    "occurrencesFound": 1,
+    "ocrBoxInDisplayPoints": {
+     "height": 12.203389167785645,
+     "width": 38.66278839111325,
+     "x": 300.4651179156352,
+     "y": 90.13559345000549
+    },
+    "text": "Layout"
+   }
+  }
+ ],
+ "totalCostInUSDEstimated": 0.06473789999999999,
+ "unverifiedStepCount": 0
+}

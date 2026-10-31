@@ -199,6 +199,23 @@ Accuracy needs no extra upscaling: 1280px and 1568px both hit 9 of 9 small icons
 - The panel says "Grant all four" and doesn't list Speech Recognition, which is requested on first hotkey press.
 - A harmless `default.profraw` warning prints on exit from debug builds.
 
+## Show Me Once
+
+Teach mode, the lesson compiler, follow mode and the share card are built on this foundation. The story and shot list are in `docs/demo/show-me-once/DEMO.md`, and results are in `docs/demo/show-me-once/evidence/README.md`.
+
+```bash
+scripts/headless.sh --headless-lesson-self-test
+scripts/headless.sh --headless-lesson-preflight
+scripts/make-synthetic-lesson.py                     # needs Blender and the claude CLI
+scripts/demo-show-me-once.sh                         # build, documents, permissions
+```
+
+Follower checks always use two screens now: the one from when the step began, and the current one.
+
+Build output moves with `CLICKY_DERIVED_DATA_PATH`, for parallel checkouts.
+
+`--headless-transcribe` hung with Speech Recognition granted, and wasn't diagnosed. `--headless-narration-file` runs a file through teach mode's recognition and works.
+
 ## What changed from upstream
 
 - **Removed:** PostHog, which sent voice transcripts to the upstream author's project, and the FormSpark email post. The `ClickyAnalytics` calls remain as no-ops.

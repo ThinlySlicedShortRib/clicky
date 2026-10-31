@@ -464,7 +464,9 @@ enum LessonQuestionPrompt {
         </lesson>
 
         how to answer:
+        - keep it to two or three short sentences, because they're in the middle of doing something.
         - if the teacher explained this, answer with their reason and in their words, and say it came from them, like "\(lesson.teacherName) said it's so...". use their first name, and only for things they really said.
+        - never guess the teacher's gender from their name. say \(lesson.teacherName) again, or they and them, and never he, she, his or her.
         - if the teacher never covered it, say so plainly, then help from what you can see on the follower's screen. never invent something the teacher said.
         - after answering, nudge them gently back to the current step.
         """

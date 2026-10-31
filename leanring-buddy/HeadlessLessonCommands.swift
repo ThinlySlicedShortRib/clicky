@@ -30,6 +30,7 @@ enum HeadlessLessonCommand {
     case indicatorImage(pngOutputPath: String, isPausedForSecureInput: Bool)
     case findText(imagePath: String, text: String)
     case presenter(lessonPath: String)
+    case narrationFile(audioFilePath: String)
     case panelSection(pngOutputPath: String)
     case changedRows(beforeImagePath: String, afterImagePath: String, columnStartInPixels: Int, columnEndInPixels: Int)
 
@@ -90,6 +91,9 @@ enum HeadlessLessonCommand {
         }
         if let lessonPath = value(after: "--headless-lesson-presenter") {
             return .presenter(lessonPath: lessonPath)
+        }
+        if let audioFilePath = value(after: "--headless-narration-file") {
+            return .narrationFile(audioFilePath: audioFilePath)
         }
         if let pngOutputPath = value(after: "--headless-panel-section") {
             return .panelSection(pngOutputPath: pngOutputPath)
@@ -175,6 +179,8 @@ struct HeadlessLessonCommandRunner {
             runFindText(imagePath: imagePath, text: text)
         case .presenter(let lessonPath):
             await runPresenterCheck(lessonPath: lessonPath)
+        case .narrationFile(let audioFilePath):
+            await runNarrationFile(audioFilePath: audioFilePath)
         case .panelSection(let pngOutputPath):
             runPanelSection(pngOutputPath: pngOutputPath)
         case .changedRows(let beforeImagePath, let afterImagePath, let columnStartInPixels, let columnEndInPixels):
@@ -660,19 +666,59 @@ struct HeadlessLessonCommandRunner {
         ], exitCode: didPass ? 0 : 1)
     }
 
+    /// Teach mode's own recognition code on a spoken file. Needs Speech
+    /// Recognition, and proves nothing about the microphone itself.
+    private func runNarrationFile(audioFilePath: String) async {
+        let speechStatus = SFSpeechRecognizer.authorizationStatus()
+        guard speechStatus == .authorized else {
+            HeadlessOutput.finish([
+                "status": "permission_missing",
+                "speechRecognition": HeadlessCommandRunner.describe(speechStatus)
+            ], exitCode: 3)
+        }
+
+        let narrationCapture = TeachNarrationCapture(
+            narrationAudioFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("unused-\(UUID().uuidString).m4a")
+        )
+        let startDate = Date()
+
+        do {
+            let narrationSegments = try await narrationCapture.transcribeFileForCheck(at: URL(fileURLWithPath: audioFilePath))
+            HeadlessOutput.finish([
+                "status": narrationSegments.isEmpty ? "failed" : "ok",
+                "seconds": round(Date().timeIntervalSince(startDate) * 10) / 10,
+                "recognizerLocale": narrationCapture.recognizerLocaleIdentifier,
+                "onDeviceSupported": narrationCapture.supportsOnDeviceRecognition,
+                "recognitionError": narrationCapture.lastRecognitionErrorDescription ?? NSNull(),
+                "segments": narrationSegments.map { segment in
+                    ["text": segment.text, "startSeconds": segment.startSeconds, "endSeconds": segment.endSeconds] as [String: Any]
+                }
+            ], exitCode: narrationSegments.isEmpty ? 1 : 0)
+        } catch {
+            HeadlessOutput.finish(["status": "failed", "error": error.localizedDescription], exitCode: 1)
+        }
+    }
+
     private func runPanelSection(pngOutputPath: String) {
-        let imageRenderer = ImageRenderer(content:
+        // ImageRenderer draws a placeholder for buttons and drop targets, which
+        // are AppKit underneath, so this goes through a real hosting view.
+        let hostingView = NSHostingView(rootView:
             ShowMeOncePanelSection(coordinator: ShowMeOnceCoordinator())
                 .frame(width: 288)
                 .padding(16)
                 .background(Color(red: 0.07, green: 0.08, blue: 0.10))
         )
-        imageRenderer.scale = 2
+        hostingView.frame = NSRect(origin: .zero, size: hostingView.fittingSize)
+        hostingView.layoutSubtreeIfNeeded()
 
-        guard let renderedImage = imageRenderer.cgImage,
-              let pngData = NSBitmapImageRep(cgImage: renderedImage).representation(using: .png, properties: [:]),
-              (try? pngData.write(to: URL(fileURLWithPath: pngOutputPath))) != nil else {
+        guard let bitmap = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds) else {
             HeadlessOutput.finish(["status": "failed", "error": "could not render the panel section"], exitCode: 1)
+        }
+        hostingView.cacheDisplay(in: hostingView.bounds, to: bitmap)
+
+        guard let pngData = bitmap.representation(using: .png, properties: [:]),
+              (try? pngData.write(to: URL(fileURLWithPath: pngOutputPath))) != nil else {
+            HeadlessOutput.finish(["status": "failed", "error": "could not write the panel section"], exitCode: 1)
         }
         HeadlessOutput.finish(["status": "ok", "panelSectionPath": pngOutputPath], exitCode: 0)
     }
@@ -915,6 +961,11 @@ enum LessonSelfTest {
         expect(alignment.trailingNarrationText == "and we're done", "speech after the last action is the sign-off")
         expect(alignment.fullTranscript.hasPrefix("click the chart button"), "the transcript keeps its order")
 
+        let introduction = TeachNarrationSegment(text: "okay this took me ages to find", startSeconds: 0, endSeconds: 2)
+        let instruction = TeachNarrationSegment(text: "click the chart button up top", startSeconds: 3, endSeconds: 5)
+        let clipSegments = TeacherWordOverlap.segmentsSpokenInLine("click the chart button", from: [introduction, instruction])
+        expect(clipSegments == [instruction], "a voice clip holds only the phrases its line came from")
+
         let secureAlignment = TeachNarrationAligner.align(makeRecording(
             actionTimes: [5],
             segments: [
@@ -1007,7 +1058,8 @@ enum LessonSelfTest {
             let minimalLesson = makeMinimalLesson()
             let fourStepLesson = ClickyLesson(
                 lessonIdentifier: "x", title: "x", summary: "x", teacherName: "x", createdAt: Date(), provenance: .liveRecording,
-                applicationName: "x", applicationBundleIdentifier: nil, openingLine: "", closingLine: "", teacherNarrationTranscript: "",
+                applicationName: "x", applicationBundleIdentifier: nil, openingLine: "", closingLine: "",
+            openingVoiceClipFileName: nil, closingVoiceClipFileName: nil, teacherNarrationTranscript: "",
                 taughtOnSetup: minimalLesson.taughtOnSetup,
                 steps: Array(repeating: minimalLesson.steps[0], count: 4),
                 costEvidence: LessonCostEvidence(compileCalls: [], rehearsalCalls: rehearsalCalls, replayRuns: replayRuns)
@@ -1147,7 +1199,8 @@ enum LessonSelfTest {
         )
         return ClickyLesson(
             lessonIdentifier: "x", title: "x", summary: "x", teacherName: "x", createdAt: Date(), provenance: .liveRecording,
-            applicationName: "x", applicationBundleIdentifier: nil, openingLine: "", closingLine: "", teacherNarrationTranscript: "",
+            applicationName: "x", applicationBundleIdentifier: nil, openingLine: "", closingLine: "",
+            openingVoiceClipFileName: nil, closingVoiceClipFileName: nil, teacherNarrationTranscript: "",
             taughtOnSetup: LessonSetupDescription(displaySizeInPoints: LessonRectangle(.zero), windowSizeInPoints: nil, appearanceName: "dark"),
             steps: [step],
             costEvidence: LessonCostEvidence(compileCalls: [], rehearsalCalls: [], replayRuns: [])
@@ -1190,24 +1243,32 @@ enum LessonSelfTest {
 
             let inputDescription = "\(channelCount) channels at \(Int(sampleRate))"
 
-            guard let inputFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: channelCount),
+            // The standard initializer can't describe more than two channels.
+            guard let channelLayout = AVAudioChannelLayout(layoutTag: kAudioChannelLayoutTag_DiscreteInOrder | UInt32(channelCount)),
+                  case let inputFormat = AVAudioFormat(
+                    commonFormat: .pcmFormatFloat32,
+                    sampleRate: sampleRate,
+                    interleaved: false,
+                    channelLayout: channelLayout
+                  ),
                   let audioBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: 4_410) else {
                 expect(false, "could not build a test buffer for \(inputDescription)")
                 continue
             }
             audioBuffer.frameLength = 4_410
 
-            guard let audioFile = try? AVAudioFile(
+            // Handed straight to the sink, because a file is only finalized
+            // once its last reference goes.
+            guard let audioSink = (try? AVAudioFile(
                 forWriting: audioFileURL,
                 settings: TeachNarrationAudioSink.makeNarrationFileSettings(sampleRate: sampleRate),
                 commonFormat: .pcmFormatFloat32,
                 interleaved: false
-            ) else {
+            )).map({ TeachNarrationAudioSink(audioFile: $0) }) else {
                 expect(false, "could not open a narration file for \(inputDescription)")
                 continue
             }
 
-            let audioSink = TeachNarrationAudioSink(audioFile: audioFile)
             let writesFinished = DispatchSemaphore(value: 0)
             let audioThreadQueue = DispatchQueue(label: "clicky.selftest.audio", qos: .userInteractive)
 

@@ -39,6 +39,10 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         // which would otherwise kill the whole app instead of failing the call.
         signal(SIGPIPE, SIG_IGN)
 
+        // Redirected output is block-buffered by default, and quitting would
+        // lose the lines that say why a lesson stopped.
+        setlinebuf(stdout)
+
         // Headless flags run a scripted check and exit without any menu bar
         // UI, so child agents can verify the app without a human at the hotkey.
         if let headlessCommand = HeadlessCommand.parse(arguments: CommandLine.arguments) {

@@ -76,10 +76,12 @@ nonisolated final class TeachNarrationAudioSink: @unchecked Sendable {
 
         recognitionRequest?.append(audioBuffer)
 
+        // Counted even with no file, because recognition timing depends on it.
+        framesWritten += AVAudioFramePosition(audioBuffer.frameLength)
+
         guard let audioFile else { return }
         do {
             try audioFile.write(from: firstChannel(of: audioBuffer, matching: audioFile.processingFormat))
-            framesWritten += AVAudioFramePosition(audioBuffer.frameLength)
         } catch {
             print("⚠️ Show Me Once: narration audio write failed: \(error.localizedDescription)")
         }
@@ -116,11 +118,16 @@ nonisolated final class TeachNarrationAudioSink: @unchecked Sendable {
 /// pipeline is built around a held key and one final transcript, while this
 /// needs phrases with timestamps, so that they can be matched to actions.
 final class TeachNarrationCapture {
+    private static let finalResultWaitInSeconds: TimeInterval = 6
+
     /// Recognition requests degrade on long audio, so a fresh one takes over
     /// at this point in a recording, and timestamps carry across the handover.
     private static let recognitionRequestLifetimeInSeconds: TimeInterval = 50
     /// A pause this long ends a phrase.
-    private static let phraseGapInSeconds = 0.7
+    private static let phraseGapInSeconds = 0.35
+    /// People talk straight through clicks without pausing, and a phrase that
+    /// ran on would pin everything they said to one action.
+    private static let maximumPhraseLengthInSeconds = 3.0
 
     private let audioEngine = AVAudioEngine()
     private let speechRecognizer: SFSpeechRecognizer?
@@ -138,10 +145,20 @@ final class TeachNarrationCapture {
 
     private var completedSegments: [TeachNarrationSegment] = []
     private var latestRequestSegments: [TeachNarrationSegment] = []
+    private var didReceiveFinalResult = false
+    private(set) var lastRecognitionErrorDescription: String?
 
     init(narrationAudioFileURL: URL) {
         self.narrationAudioFileURL = narrationAudioFileURL
         self.speechRecognizer = SFSpeechRecognizer(locale: Locale.autoupdatingCurrent) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    }
+
+    var recognizerLocaleIdentifier: String {
+        speechRecognizer?.locale.identifier ?? "none"
+    }
+
+    var supportsOnDeviceRecognition: Bool {
+        speechRecognizer?.supportsOnDeviceRecognition ?? false
     }
 
     static func requestPermissions() async -> Bool {
@@ -187,16 +204,25 @@ final class TeachNarrationCapture {
         }
     }
 
-    /// Stops listening and waits briefly for the last words to resolve.
+    /// Stops listening and waits for the last words to resolve. The wait ends
+    /// as soon as recognition reports its final result, and has a limit so a
+    /// recognizer that never answers can't strand the lesson.
     func stop() async -> [TeachNarrationSegment] {
         recognitionRolloverTimer?.invalidate()
         recognitionRolloverTimer = nil
 
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
+        if audioEngine.isRunning {
+            audioEngine.inputNode.removeTap(onBus: 0)
+            audioEngine.stop()
+        }
+
+        didReceiveFinalResult = false
         recognitionRequest?.endAudio()
 
-        try? await Task.sleep(nanoseconds: 1_200_000_000)
+        let finalResultDeadline = Date().addingTimeInterval(Self.finalResultWaitInSeconds)
+        while !didReceiveFinalResult, Date() < finalResultDeadline {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
 
         recognitionTask?.cancel()
         recognitionTask = nil
@@ -237,13 +263,46 @@ final class TeachNarrationCapture {
                     // arrive here too, and they have to stay with that request.
                     if requestStartSeconds == self.currentRequestStartSeconds {
                         self.latestRequestSegments = phraseSegments
+                        if recognitionResult.isFinal {
+                            self.didReceiveFinalResult = true
+                        }
                     }
                 }
             }
             if let recognitionError {
                 print("⚠️ Show Me Once: speech recognition stopped: \(recognitionError.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.lastRecognitionErrorDescription = recognitionError.localizedDescription
+                    self.didReceiveFinalResult = true
+                }
             }
         }
+    }
+
+    /// Runs a speech file through the same recognition path a live recording
+    /// uses, paced like a microphone, so it can be checked with nobody talking.
+    func transcribeFileForCheck(at audioFileURL: URL) async throws -> [TeachNarrationSegment] {
+        let audioFile = try AVAudioFile(forReading: audioFileURL)
+        let processingFormat = audioFile.processingFormat
+        audioSampleRate = processingFormat.sampleRate
+
+        let newAudioSink = TeachNarrationAudioSink(audioFile: nil)
+        audioSink = newAudioSink
+        startRecognitionRequest()
+
+        let framesPerBuffer: AVAudioFrameCount = 2_048
+        // Quicker than a real microphone, but still arriving in pieces over time.
+        let pacingSpeedUp = 4.0
+        let secondsPerBuffer = Double(framesPerBuffer) / processingFormat.sampleRate / pacingSpeedUp
+
+        while audioFile.framePosition < audioFile.length {
+            guard let audioBuffer = AVAudioPCMBuffer(pcmFormat: processingFormat, frameCapacity: framesPerBuffer) else { break }
+            try audioFile.read(into: audioBuffer)
+            newAudioSink.receive(audioBuffer)
+            try await Task.sleep(nanoseconds: UInt64(secondsPerBuffer * 1_000_000_000))
+        }
+
+        return await stop()
     }
 
     private func rollOverRecognitionRequest() {
@@ -275,7 +334,9 @@ final class TeachNarrationCapture {
         }
 
         for transcriptionSegment in transcriptionSegments {
-            if !phraseWords.isEmpty, transcriptionSegment.timestamp - phraseEndSeconds >= phraseGapInSeconds {
+            let hasPaused = transcriptionSegment.timestamp - phraseEndSeconds >= phraseGapInSeconds
+            let hasRunTooLong = transcriptionSegment.timestamp - phraseStartSeconds >= maximumPhraseLengthInSeconds
+            if !phraseWords.isEmpty, hasPaused || hasRunTooLong {
                 finishPhrase()
             }
             if phraseWords.isEmpty {
@@ -283,6 +344,11 @@ final class TeachNarrationCapture {
             }
             phraseWords.append(transcriptionSegment.substring)
             phraseEndSeconds = transcriptionSegment.timestamp + transcriptionSegment.duration
+
+            let endsSentence = transcriptionSegment.substring.last.map { ".?!".contains($0) } ?? false
+            if endsSentence {
+                finishPhrase()
+            }
         }
         finishPhrase()
         return phrases

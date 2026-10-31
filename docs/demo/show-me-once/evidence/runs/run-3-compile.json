@@ -1,0 +1,71 @@
+{
+ "archiveSizeInBytes": 228247,
+ "compileCalls": [
+  {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 6216,
+   "costInUSD": 0.021380100000000006,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 2059,
+   "timeToFirstTextInSeconds": 8.026164054870605,
+   "totalDurationInSeconds": 14.612982034683228
+  }
+ ],
+ "compileSeconds": 19.8,
+ "lessonPath": "/tmp/smo-work/synth/synthetic-blender-lesson.clicky",
+ "lessonTitle": "change how long your animation is",
+ "model": "claude-sonnet-5-5",
+ "provenance": "syntheticRecording",
+ "rehearsalCalls": [
+  {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 2552,
+   "cacheReadInputTokens": 0,
+   "costInUSD": 0.0105726,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 22,
+   "timeToFirstTextInSeconds": 1.3685270547866821,
+   "totalDurationInSeconds": 2.397065043449402
+  },
+  {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 2382,
+   "cacheReadInputTokens": 0,
+   "costInUSD": 0.0099219,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 26,
+   "timeToFirstTextInSeconds": 1.3188509941101074,
+   "totalDurationInSeconds": 2.386628031730652
+  }
+ ],
+ "spokenLineSources": [
+  "teacherWords",
+  "teacherWords",
+  "teacherWords",
+  "teacherWords"
+ ],
+ "status": "ok",
+ "stepCount": 4,
+ "teacherWordOverlap": [
+  1,
+  1,
+  1,
+  1
+ ],
+ "voiceClips": [
+  "step-1.m4a",
+  "step-2.m4a",
+  "step-3.m4a",
+  "step-4.m4a"
+ ]
+}

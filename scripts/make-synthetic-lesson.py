@@ -8,6 +8,8 @@ closest honest stand-in: a SYNTHETIC recording made from real windows.
   real:      the compiler, the model calls, the OCR ground truth, the costs
   synthetic: a script made the changes instead of a person clicking
   synthetic: the narration is written below and spoken by `say`
+  real:      if Speech Recognition is granted, the transcript comes from running
+             that audio through teach mode's own recognition code
   absent:    accessibility info, because Blender doesn't expose any
 
 The follower's setup differs on purpose: light theme, different window size and
@@ -272,6 +274,15 @@ def build_recording(frames_directory, recording_directory, window_in_points):
 
     narration_file_name, segments, phrase_end_times = synthesize_narration(recording_directory)
 
+    # Recognized text is rougher than the script, which is the honest input.
+    narration_path = os.path.join(recording_directory, narration_file_name)
+    narration_result = run_headless("--headless-narration-file", narration_path)
+    narration_source = "the written script, because speech recognition isn't available"
+    if narration_result.get("status") == "ok":
+        segments = narration_result["segments"]
+        narration_source = f"apple speech on-device recognition of that audio, {len(segments)} phrases"
+    log(f"  narration from {narration_source}")
+
     actions = []
     for phrase_index, phrase in enumerate(SYNTHETIC_NARRATION):
         action = phrase["action"]
@@ -323,7 +334,7 @@ def build_recording(frames_directory, recording_directory, window_in_points):
         "recordingIdentifier": str(uuid.uuid4()),
         "provenance": {
             "kind": "syntheticRecording",
-            "note": "real blender window exports, scripted changes, written narration spoken by the say voice.",
+            "note": f"real blender window exports, scripted changes, written narration spoken by the say voice, transcript from {narration_source}.",
         },
         "teacherName": TEACHER_NAME,
         "startedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

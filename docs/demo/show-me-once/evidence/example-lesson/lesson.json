@@ -1,0 +1,295 @@
+{
+  "applicationBundleIdentifier" : "org.blenderfoundation.blender",
+  "applicationName" : "Blender",
+  "closingLine" : "that's it, nice and easy.",
+  "closingVoiceClipFileName" : "closing.m4a",
+  "costEvidence" : {
+    "compileCalls" : [
+      {
+        "purpose" : "compile",
+        "usage" : {
+          "backendName" : "claude CLI",
+          "cacheCreationInputTokens" : 0,
+          "cacheReadInputTokens" : 6206,
+          "costInUSD" : 0.0119586,
+          "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+          "inputTokens" : 2,
+          "isCostEstimated" : true,
+          "modelIdentifier" : "claude-sonnet-5-5",
+          "outputTokens" : 1117,
+          "timeToFirstTextInSeconds" : 1.3333690166473389,
+          "totalDurationInSeconds" : 7.9481799602508545
+        }
+      }
+    ],
+    "rehearsalCalls" : [
+      {
+        "purpose" : "locate",
+        "usage" : {
+          "backendName" : "claude CLI",
+          "cacheCreationInputTokens" : 0,
+          "cacheReadInputTokens" : 2563,
+          "costInUSD" : 0.0006320000000000002,
+          "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+          "inputTokens" : 2,
+          "isCostEstimated" : true,
+          "modelIdentifier" : "claude-sonnet-5-5",
+          "outputTokens" : 23,
+          "timeToFirstTextInSeconds" : 1.393942952156067,
+          "totalDurationInSeconds" : 2.4154900312423706
+        }
+      },
+      {
+        "purpose" : "check",
+        "usage" : {
+          "backendName" : "claude CLI",
+          "cacheCreationInputTokens" : 2391,
+          "cacheReadInputTokens" : 0,
+          "costInUSD" : 0.009808,
+          "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+          "inputTokens" : 2,
+          "isCostEstimated" : true,
+          "modelIdentifier" : "claude-sonnet-5-5",
+          "outputTokens" : 24,
+          "timeToFirstTextInSeconds" : 1.6209430694580078,
+          "totalDurationInSeconds" : 2.650876045227051
+        }
+      }
+    ],
+    "replayRuns" : [
+      {
+        "calls" : [
+          {
+            "purpose" : "locate",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 0,
+              "cacheReadInputTokens" : 2563,
+              "costInUSD" : 0.000622,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 22,
+              "timeToFirstTextInSeconds" : 1.4704930782318115,
+              "totalDurationInSeconds" : 2.543989062309265
+            }
+          },
+          {
+            "purpose" : "locate",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 2632,
+              "cacheReadInputTokens" : 0,
+              "costInUSD" : 0.011762,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 123,
+              "timeToFirstTextInSeconds" : 2.0268759727478027,
+              "totalDurationInSeconds" : 2.894083023071289
+            }
+          },
+          {
+            "purpose" : "locate",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 2608,
+              "cacheReadInputTokens" : 0,
+              "costInUSD" : 0.010685999999999998,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 25,
+              "timeToFirstTextInSeconds" : 1.5842169523239136,
+              "totalDurationInSeconds" : 2.5100820064544678
+            }
+          },
+          {
+            "purpose" : "check",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 2389,
+              "cacheReadInputTokens" : 0,
+              "costInUSD" : 0.0099191,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 23,
+              "timeToFirstTextInSeconds" : 1.4521629810333252,
+              "totalDurationInSeconds" : 2.4522279500961304
+            }
+          },
+          {
+            "purpose" : "locate",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 2553,
+              "cacheReadInputTokens" : 0,
+              "costInUSD" : 0.0105782,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 22,
+              "timeToFirstTextInSeconds" : 1.6859760284423828,
+              "totalDurationInSeconds" : 2.5175050497055054
+            }
+          },
+          {
+            "purpose" : "check",
+            "usage" : {
+              "backendName" : "claude CLI",
+              "cacheCreationInputTokens" : 2400,
+              "cacheReadInputTokens" : 0,
+              "costInUSD" : 0.009894,
+              "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+              "inputTokens" : 2,
+              "isCostEstimated" : true,
+              "modelIdentifier" : "claude-sonnet-5-5",
+              "outputTokens" : 29,
+              "timeToFirstTextInSeconds" : 1.3897689580917358,
+              "totalDurationInSeconds" : 2.4726450443267822
+            }
+          }
+        ],
+        "captureSource" : "fixture",
+        "finishedAt" : "2026-10-31T19:23:29Z"
+      }
+    ]
+  },
+  "createdAt" : "2026-10-31T19:22:49Z",
+  "formatVersion" : 1,
+  "lessonIdentifier" : "911C5E38-0E0D-4EF3-B867-A4EED1770EDD",
+  "openingLine" : "ok, so this is how you change how long your animation is. it took me ages to find this first go.",
+  "openingVoiceClipFileName" : "opening.m4a",
+  "provenance" : {
+    "kind" : "syntheticRecording",
+    "note" : "real blender window exports, scripted changes, written narration spoken by the say voice, transcript from apple speech on-device recognition of that audio, 13 phrases."
+  },
+  "steps" : [
+    {
+      "action" : "click",
+      "bubbleText" : "click animation tab",
+      "element" : {
+        "accessibilityTitleHints" : [
+
+        ],
+        "description" : "the animation workspace tab in the row of workspace tabs",
+        "kind" : "applicationControl",
+        "referenceImageFileName" : "step-1.jpg",
+        "whereToLook" : "in the row of tabs along the very top of the window"
+      },
+      "intent" : "open the animation workspace tab",
+      "spokenLine" : "go up to the top and click animation. that's the tab with all the timing stuff.",
+      "spokenLineSource" : "teacherWords",
+      "stepNumber" : 1,
+      "successCheck" : {
+        "description" : "the workspace switches to one with a dope sheet timeline area at the bottom and extra viewport panels at the top",
+        "newlyVisibleTextAnyOf" : [
+          "Dope Sheet",
+          "Summary"
+        ]
+      },
+      "teacherWordOverlap" : 1,
+      "usesDocumentSpecificWords" : false,
+      "voiceClipFileName" : "step-1.m4a"
+    },
+    {
+      "action" : "click",
+      "bubbleText" : "click output icon",
+      "element" : {
+        "accessibilityTitleHints" : [
+
+        ],
+        "description" : "the output properties tab, shown as a printer icon, in the column of property tabs",
+        "kind" : "applicationControl",
+        "referenceImageFileName" : "step-2.jpg",
+        "whereToLook" : "in the vertical column of icons on the left edge of the properties panel on the right"
+      },
+      "intent" : "open the output properties tab",
+      "spokenLine" : "then over on the right, see this little printer icon. i know it looks like a printer, trust me, that's output.",
+      "spokenLineSource" : "teacherWords",
+      "stepNumber" : 2,
+      "successCheck" : {
+        "description" : "the properties panel changes to show output settings including format and frame range sections",
+        "newlyVisibleTextAnyOf" : [
+          "Format",
+          "Frame Range",
+          "Output"
+        ]
+      },
+      "teacherWordOverlap" : 1,
+      "usesDocumentSpecificWords" : false,
+      "voiceClipFileName" : "step-2.m4a"
+    },
+    {
+      "action" : "type",
+      "bubbleText" : "type end frame",
+      "element" : {
+        "accessibilityTitleHints" : [
+
+        ],
+        "description" : "the end number field inside the frame range section of the output properties",
+        "kind" : "applicationControl",
+        "referenceImageFileName" : "step-3.jpg",
+        "whereToLook" : "in the frame range section of the properties panel on the right"
+      },
+      "intent" : "set the end frame to the length you want",
+      "spokenLine" : "now find frame range, click the end number and type how long you want. i always do 120 because that's five seconds of 24 frames.",
+      "spokenLineSource" : "teacherWords",
+      "stepNumber" : 3,
+      "successCheck" : {
+        "description" : "the end frame value in the frame range section has changed to the number that was typed, and the timeline's end value matches it",
+        "newlyVisibleTextAnyOf" : [
+
+        ]
+      },
+      "teacherWordOverlap" : 0.92,
+      "usesDocumentSpecificWords" : false,
+      "voiceClipFileName" : "step-3.m4a"
+    },
+    {
+      "action" : "click",
+      "bubbleText" : "click layout tab",
+      "element" : {
+        "accessibilityTitleHints" : [
+
+        ],
+        "description" : "the layout workspace tab in the row of workspace tabs",
+        "kind" : "applicationControl",
+        "referenceImageFileName" : "step-4.jpg",
+        "whereToLook" : "in the row of tabs along the very top of the window, at the left"
+      },
+      "intent" : "return to the layout workspace",
+      "spokenLine" : "then go back to layout and you're done.",
+      "spokenLineSource" : "teacherWords",
+      "stepNumber" : 4,
+      "successCheck" : {
+        "description" : "the workspace switches back to the default layout with one large 3d viewport and a slim timeline along the bottom, and the dope sheet is gone",
+        "newlyVisibleTextAnyOf" : [
+
+        ]
+      },
+      "teacherWordOverlap" : 1,
+      "usesDocumentSpecificWords" : false,
+      "voiceClipFileName" : "step-4.m4a"
+    }
+  ],
+  "summary" : "your blender project has a new end frame, so the animation runs for the length you chose.",
+  "taughtOnSetup" : {
+    "appearanceName" : "dark",
+    "displaySizeInPoints" : {
+      "height" : 720,
+      "width" : 1100,
+      "x" : 0,
+      "y" : 0
+    }
+  },
+  "teacherName" : "sean",
+  "teacherNarrationTranscript" : "OK, so this is how you change how long your animation is it took me ages to find this first go up to the top and click animation. That's the tab with all the timing stuff then over on the right see this little printer icon. I know it looks like a printer. Trust me that's output now find frame range click the end number and type how long you want. I always do 1 20 because that's five seconds of 2 4 frames then go back to layout and you're done. that's it nice and easy.",
+  "title" : "change how long your animation is"
+}

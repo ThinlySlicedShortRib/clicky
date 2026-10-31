@@ -131,7 +131,8 @@ final class LessonFollowController: ObservableObject {
             // for the app, only to fail at the first step.
             _ = try await captureScreen()
 
-            await speak(line: lesson.openingLine, voiceClipURL: nil)
+            await speak(line: lesson.openingLine, voiceClipURL: lessonPackage.voiceClipURL(forFileName: lesson.openingVoiceClipFileName))
+            await waitForSpeechToFinish()
             try await waitForLessonApplication(lesson)
 
             for stepIndex in lesson.steps.indices {
@@ -142,7 +143,7 @@ final class LessonFollowController: ObservableObject {
 
             presenter?.releaseLessonPoint()
             state = .finished
-            await speak(line: lesson.closingLine, voiceClipURL: nil)
+            await speak(line: lesson.closingLine, voiceClipURL: lessonPackage.voiceClipURL(forFileName: lesson.closingVoiceClipFileName))
             recordFinishedRun(lessonPackage)
             activeLessonPackage = nil
         } catch is CancellationError {

@@ -1,0 +1,6 @@
+🎙️ Transcription: using Apple Speech
+🎯 Clicky: Starting...
+🎯 Clicky: Version 1.0
+🔑 Clicky start — accessibility: false, screen: false, mic: false, screenContent: false, onboarded: true
+⚠️ Show Me Once: lesson stopped: Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-show-me-once/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.
+🔊 say TTS: speaking 106 characters with voice Samantha

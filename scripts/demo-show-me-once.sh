@@ -74,6 +74,16 @@ PREFLIGHT_STATUS=0
 "$REPOSITORY_ROOT/scripts/headless.sh" "${PREFLIGHT_ARGUMENTS[@]}" >"$PREFLIGHT_RESULT" || PREFLIGHT_STATUS=$?
 cat "$PREFLIGHT_RESULT"
 
+if grep -q '"lessonFilesOpenInThisBuild" : false' "$PREFLIGHT_RESULT"; then
+    cat >&2 <<HELP
+
+Warning: double-clicking a .clicky file won't open this build. Usually that's
+other copies of Clicky built on this Mac, which share its bundle id. Either:
+  - remove them: $LAUNCH_SERVICES_REGISTER -u <path to the other Clicky.app>
+  - or drop the file on the panel, use its "open lesson" button, or --follow
+HELP
+fi
+
 if [[ "$PREFLIGHT_STATUS" -eq 3 ]]; then
     cat >&2 <<HELP
 

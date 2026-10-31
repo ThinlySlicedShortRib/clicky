@@ -1,0 +1,19 @@
+{
+  "captureSource" : "fixture",
+  "question" : "why a hundred and twenty? is that important?",
+  "spokenAnswer" : "it's not special, it's just sean's pick. sean said they always use one hundred twenty because that's five seconds at twenty-four frames per second. your end frame is currently four hundred eighty, which would be twenty seconds, so click that end number and type whatever length you want.",
+  "status" : "ok",
+  "usage" : {
+    "backendName" : "claude CLI",
+    "cacheCreationInputTokens" : 3967,
+    "cacheReadInputTokens" : 0,
+    "costInUSD" : 0.018303199999999999,
+    "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+    "inputTokens" : 2,
+    "isCostEstimated" : true,
+    "modelIdentifier" : "claude-sonnet-5-5",
+    "outputTokens" : 224,
+    "timeToFirstTextInSeconds" : 2.2596719264984131,
+    "totalDurationInSeconds" : 3.8368899822235107
+  }
+}
