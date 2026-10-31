@@ -127,6 +127,10 @@ final class LessonFollowController: ObservableObject {
         let lesson = lessonPackage.lesson
 
         do {
+            // Finding out now beats a friendly opening line followed by a wait
+            // for the app, only to fail at the first step.
+            _ = try await captureScreen()
+
             await speak(line: lesson.openingLine, voiceClipURL: nil)
             try await waitForLessonApplication(lesson)
 
@@ -235,6 +239,7 @@ final class LessonFollowController: ObservableObject {
                 let verdict = try await followEngine.checkSuccess(
                     of: step,
                     currentScreenCaptures: currentCaptures,
+                    baselineScreenCaptures: baselineCaptures,
                     baselineTextLines: baselineTextLines
                 )
                 record(verdict.usage, purpose: "check")

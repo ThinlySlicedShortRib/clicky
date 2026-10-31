@@ -57,6 +57,7 @@ enum HeadlessCommand {
     case transcribe(audioFilePath: String)
     case windowBounds(owningApplicationName: String)
     case ask(transcript: String)
+    case lesson(HeadlessLessonCommand)
 
     /// Returns nil when no headless flag is present and the app should launch
     /// normally. Bad arguments exit immediately so a script can't mistake a
@@ -78,6 +79,10 @@ enum HeadlessCommand {
                 exitWithUsageError("\(flag) expects x,y,width,height, got \(rawValue)")
             }
             return CGRect(x: components[0], y: components[1], width: components[2], height: components[3])
+        }
+
+        if let lessonCommand = HeadlessLessonCommand.parse(arguments: arguments, onUsageError: exitWithUsageError) {
+            return .lesson(lessonCommand)
         }
 
         if arguments.contains("--headless-permissions") {
@@ -153,7 +158,7 @@ enum HeadlessCommand {
 
 // MARK: - Output
 
-private enum HeadlessOutput {
+enum HeadlessOutput {
     static var outputPath: String? {
         let arguments = CommandLine.arguments
         guard let flagIndex = arguments.firstIndex(of: "--output"), flagIndex + 1 < arguments.count else { return nil }
@@ -203,7 +208,8 @@ private enum HeadlessOutput {
 struct HeadlessCommandRunner {
     let companionManager: CompanionManager
 
-    private static let wholeCommandTimeoutInSeconds: TimeInterval = 300
+    /// Long enough for a compile followed by its rehearsal calls.
+    private static let wholeCommandTimeoutInSeconds: TimeInterval = 600
     private static let speechAuthorizationPromptWaitInSeconds: TimeInterval = 20
 
     func run(_ command: HeadlessCommand) async {
@@ -226,6 +232,8 @@ struct HeadlessCommandRunner {
             runWindowBounds(owningApplicationName: owningApplicationName)
         case .ask(let transcript):
             await runAsk(transcript: transcript)
+        case .lesson(let lessonCommand):
+            await HeadlessLessonCommandRunner(companionManager: companionManager).run(lessonCommand)
         }
     }
 
@@ -281,7 +289,7 @@ struct HeadlessCommandRunner {
         ], exitCode: missingPermissions.isEmpty ? 0 : 3)
     }
 
-    private static func describe(_ status: AVAuthorizationStatus) -> String {
+    static func describe(_ status: AVAuthorizationStatus) -> String {
         switch status {
         case .authorized: return "authorized"
         case .denied: return "denied"
@@ -291,7 +299,7 @@ struct HeadlessCommandRunner {
         }
     }
 
-    private static func describe(_ status: SFSpeechRecognizerAuthorizationStatus) -> String {
+    static func describe(_ status: SFSpeechRecognizerAuthorizationStatus) -> String {
         switch status {
         case .authorized: return "authorized"
         case .denied: return "denied"
@@ -872,7 +880,7 @@ struct GroundTruthImage {
 /// Builds a capture from a saved image, shaped exactly like a real one: a
 /// full-display frame at the same downscaled size. Everything after capture
 /// then runs unchanged, including the scaling that real captures go through.
-private enum FixtureScreenCapture {
+enum FixtureScreenCapture {
     struct FixtureError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
@@ -955,7 +963,7 @@ private enum FixtureScreenCapture {
 
 /// Finds where a piece of text really is using Vision, which shares nothing
 /// with the model, so a passing check can't be the model agreeing with itself.
-private enum OCRGroundTruth {
+enum OCRGroundTruth {
     /// A click-sized tolerance around the text box: small targets like tabs
     /// have padding beyond the glyphs that OCR measures.
     private static let hitMarginInPoints: CGFloat = 10
@@ -1000,7 +1008,7 @@ private enum OCRGroundTruth {
         ]
     }
 
-    private static func findWholeWordBoxes(of targetText: String, in sourceImage: CGImage, displayRect: CGRect) -> [CGRect] {
+    static func findWholeWordBoxes(of targetText: String, in sourceImage: CGImage, displayRect: CGRect) -> [CGRect] {
         let textRequest = VNRecognizeTextRequest()
         textRequest.recognitionLevel = .accurate
         textRequest.usesLanguageCorrection = false

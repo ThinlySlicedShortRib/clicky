@@ -32,6 +32,7 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarPanelManager: MenuBarPanelManager?
     private let companionManager = CompanionManager()
     private var sparkleUpdaterController: SPUStandardUpdaterController?
+    private var lessonFileWaitingForLaunch: URL?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // A CLI that exits while its stdin is being written raises SIGPIPE,
@@ -68,16 +69,27 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         if !companionManager.hasCompletedOnboarding || !companionManager.allPermissionsGranted {
             menuBarPanelManager?.showPanelOnLaunch()
         }
+        // Headless runs returned above, so a file event can't turn a scripted
+        // check into a live lesson.
+        if let lessonFileWaitingForLaunch {
+            companionManager.showMeOnceCoordinator.openLesson(at: lessonFileWaitingForLaunch)
+            self.lessonFileWaitingForLaunch = nil
+        }
+
         // Not calling registerAsLoginItemIfNeeded(): it would make a dev build
         // in a scratch checkout start on every login.
         // startSparkleUpdater()
     }
 
-    /// Double-clicking a `.clicky` file lands here, including when that launch
-    /// is what started the app. Headless runs ignore it, because a check should
-    /// never be turned into a live lesson by a file event.
+    /// Double-clicking a `.clicky` file lands here. If that launch is what
+    /// started the app, this arrives before applicationDidFinishLaunching, so
+    /// the file waits there until the app is ready to run a lesson.
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard menuBarPanelManager != nil, let lessonFileURL = urls.first else { return }
+        guard let lessonFileURL = urls.first else { return }
+        guard menuBarPanelManager != nil else {
+            lessonFileWaitingForLaunch = lessonFileURL
+            return
+        }
         companionManager.showMeOnceCoordinator.openLesson(at: lessonFileURL)
     }
 

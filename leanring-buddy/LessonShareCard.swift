@@ -58,8 +58,10 @@ enum LessonReplayCostEstimator {
     /// which steps needed the model and which were free.
     private static func estimateFromReplayRuns(_ replayRuns: [LessonReplayRun]) -> LessonReplayCostEstimate {
         let allCalls = replayRuns.flatMap(\.calls)
-        let runCountText = replayRuns.count == 1 ? "1 real run" : "\(replayRuns.count) real runs"
-        let basisDescription = "average of \(runCountText), \(allCalls.count) model calls, from \(costSourceText(of: allCalls))"
+        let usedLiveCapture = replayRuns.allSatisfy { $0.captureSource == "screencapturekit" }
+        let runNoun = usedLiveCapture ? "real run" : "test run on saved screens"
+        let runCountText = replayRuns.count == 1 ? "1 \(runNoun)" : "\(replayRuns.count) of \(runNoun)s"
+        let basisDescription = "average of \(runCountText), \(allCalls.count) real model calls, from \(costSourceText(of: allCalls))"
 
         if allCalls.contains(where: { $0.usage.costInUSD == nil }) {
             return tokenEstimate(calls: allCalls, divisor: replayRuns.count, basisDescription: basisDescription)

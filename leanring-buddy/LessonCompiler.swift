@@ -266,9 +266,10 @@ struct LessonCompiler {
     - kind is applicationControl for things that are part of the app itself, like toolbar buttons, menus and tabs. it's documentContent for anything in the user's own document, like cells, rows, headings and charts.
     - only put accessibility titles in the hints if the recorded action's accessibility info shows them.
 
-    successCheck has to be something you could confirm from one screenshot:
+    successCheck is judged by comparing the screen when the step began with the screen after it:
     - it must be false before the step and true after it, and true for a follower whose document has different contents.
     - never mention the teacher's values or words from their document.
+    - never assume a direction of change, such as bigger, smaller, shorter or longer. the follower starts from different values, so say the value changed.
     - newlyVisibleTextAnyOf only holds words printed by the app itself that weren't on screen before, such as a panel heading. leave it empty if there are none. never include document contents.
     """
 
@@ -682,7 +683,11 @@ struct LessonCompiler {
             rehearsalCalls.append(LessonCostSample(purpose: "locate", usage: locateUsage))
         }
 
-        if let verdict = try? await followEngine.checkWithVision(step: firstStep, screenCaptures: [rehearsalCapture]),
+        if let verdict = try? await followEngine.checkWithVision(
+            step: firstStep,
+            screenCaptures: [rehearsalCapture],
+            baselineScreenCaptures: [rehearsalCapture]
+        ),
            let checkUsage = verdict.usage {
             rehearsalCalls.append(LessonCostSample(purpose: "check", usage: checkUsage))
         }

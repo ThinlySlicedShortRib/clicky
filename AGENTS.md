@@ -19,6 +19,7 @@ macOS menu bar companion app. Lives entirely in the macOS status bar (no dock ic
 - **Text-to-Speech**: macOS `say` behind `CompanionTextToSpeechClient`
 - **Screen Capture**: ScreenCaptureKit (macOS 14.2+), multi-monitor support
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
+- **Show Me Once**: Teach mode records a demonstration, `LessonCompiler` turns it into a `.clicky` lesson, and follow mode replays it on someone else's setup. See `docs/demo/show-me-once/DEMO.md`
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
 - **Analytics**: None. `ClickyAnalytics.swift` is a no-op seam; PostHog was removed
@@ -71,6 +72,17 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `SayTTSClient.swift` | ~155 | `CompanionTextToSpeechClient` seam and the `say`-based client. Picks the best installed English voice. Interruptible. |
 | `ScreenshotCoordinateMapper.swift` | ~100 | Single source of truth for mapping screenshot pixels to display points and global AppKit coordinates, and for picking the target screen. |
 | `HeadlessCommandRunner.swift` | ~1040 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `LessonModels.swift` | ~310 | Show Me Once formats: the private `TeachRecording` and the shareable `ClickyLesson`. Lesson steps hold meaning, never coordinates. |
+| `TeachInputCapture.swift` | ~560 | What teach mode may keep: keystroke categories, the secure-input rules, the accessibility reader (never reads AXValue), the input accumulator, and the control+shift+t hot key. |
+| `TeachModeRecorder.swift` | ~700 | Live recording: continuous narration, the event tap, and frames around each action. |
+| `LessonCompiler.swift` | ~740 | Recording to `.clicky`: narration alignment, the model call, the teacher-word check, reference crops, voice clips, and a rehearsal for real cost figures. |
+| `LessonFollowEngine.swift` | ~460 | Locate and success check, shared by live follow and headless replay. Accessibility and local OCR first, the model only when they can't answer. |
+| `LessonFollowController.swift` | ~400 | The live lesson loop. Always captures with ScreenCaptureKit; it has no way to take a saved image. |
+| `LessonPackage.swift` | ~240 | Reads and writes `.clicky` zips, treating opened files as untrusted. |
+| `LessonImageTools.swift` | ~210 | Crops, downscaling, on-device OCR, and the screen-change fingerprint. |
+| `LessonShareCard.swift` | ~360 | Share card and the replay cost estimate. Figures come only from `BrainUsage`. |
+| `ShowMeOnceCoordinator.swift` | ~490 | Teach, compile, card and file-open flow, the watching indicator, and the panel section. |
+| `HeadlessLessonCommands.swift` | ~1050 | Lesson `--headless-*` commands and self-test. The only place saved images reach lesson logic. |
 | `ClaudeAPI.swift` | ~291 | Unused here. Claude vision API client with streaming (SSE) and non-streaming modes. |
 | `OpenAIAPI.swift` | ~142 | OpenAI GPT vision API client. |
 | `ElevenLabsTTSClient.swift` | ~81 | Unused here, but conforms to `CompanionTextToSpeechClient`. Sends text to the Worker proxy, plays back audio via `AVAudioPlayer`. |
@@ -87,6 +99,9 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 scripts/build-and-run.sh               # build, sign, relaunch
 scripts/build-and-run.sh --build-only  # build and sign only
 scripts/headless.sh --headless-self-test
+scripts/headless.sh --headless-lesson-self-test
+scripts/make-synthetic-lesson.py       # compiler and follow engine, with no human
+scripts/demo-show-me-once.sh           # preflight and demo documents
 
 # Known non-blocking warnings: Swift 6 concurrency warnings,
 # deprecated onChange warning in OverlayWindow.swift. Do NOT attempt to fix these.
@@ -95,6 +110,8 @@ scripts/headless.sh --headless-self-test
 Build through `scripts/build-and-run.sh`. It signs with the stable `Apple Development` identity, which keeps TCC (Transparency, Consent, and Control) permissions across rebuilds. Do not change the identity or bundle ID, since either one resets every grant.
 
 Run headless commands through `scripts/headless.sh`, not by executing the binary, so macOS applies Clicky's permissions rather than the shell's.
+
+`CLICKY_DERIVED_DATA_PATH` moves the build output for all three scripts, for parallel checkouts.
 
 ## Cloudflare Worker (unused here)
 

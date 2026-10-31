@@ -26,6 +26,92 @@ struct TeachModeRecorderError: LocalizedError {
 
 // MARK: - Narration
 
+/// Receives microphone buffers on the audio thread. This target defaults to the
+/// main actor, and a closure inheriting that would trap the moment a real-time
+/// thread entered it, so everything the tap touches lives here, unisolated.
+nonisolated final class TeachNarrationAudioSink: @unchecked Sendable {
+    private let lock = NSLock()
+    private var audioFile: AVAudioFile?
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var framesWritten: AVAudioFramePosition = 0
+    private var monoBuffer: AVAudioPCMBuffer?
+
+    init(audioFile: AVAudioFile?) {
+        self.audioFile = audioFile
+    }
+
+    /// The file format for narration. Always one channel: speech gains nothing
+    /// from more, and AAC refuses three or more, which some interfaces present.
+    static func makeNarrationFileSettings(sampleRate: Double) -> [String: Any] {
+        [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderBitRateKey: 48_000
+        ]
+    }
+
+    var framesWrittenSoFar: AVAudioFramePosition {
+        lock.lock()
+        defer { lock.unlock() }
+        return framesWritten
+    }
+
+    func setRecognitionRequest(_ newRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?) {
+        lock.lock()
+        defer { lock.unlock() }
+        recognitionRequest = newRecognitionRequest
+    }
+
+    /// Dropping the file is what finalizes it.
+    func closeAudioFile() {
+        lock.lock()
+        defer { lock.unlock() }
+        audioFile = nil
+    }
+
+    func receive(_ audioBuffer: AVAudioPCMBuffer) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        recognitionRequest?.append(audioBuffer)
+
+        guard let audioFile else { return }
+        do {
+            try audioFile.write(from: firstChannel(of: audioBuffer, matching: audioFile.processingFormat))
+            framesWritten += AVAudioFramePosition(audioBuffer.frameLength)
+        } catch {
+            print("⚠️ Show Me Once: narration audio write failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// A mic's channels all carry the same voice, so the first one is enough.
+    /// Reuses one buffer, because this runs for every block of audio.
+    private func firstChannel(of audioBuffer: AVAudioPCMBuffer, matching monoFormat: AVAudioFormat) -> AVAudioPCMBuffer {
+        guard audioBuffer.format.channelCount > 1,
+              let sourceSamples = audioBuffer.floatChannelData?[0] else {
+            return audioBuffer
+        }
+
+        if monoBuffer == nil || (monoBuffer?.frameCapacity ?? 0) < audioBuffer.frameLength {
+            monoBuffer = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: audioBuffer.frameLength)
+        }
+        guard let monoBuffer, let monoSamples = monoBuffer.floatChannelData?[0] else {
+            return audioBuffer
+        }
+
+        monoSamples.update(from: sourceSamples, count: Int(audioBuffer.frameLength))
+        monoBuffer.frameLength = audioBuffer.frameLength
+        return monoBuffer
+    }
+
+    func installTap(on inputNode: AVAudioInputNode, format: AVAudioFormat) {
+        inputNode.installTap(onBus: 0, bufferSize: 2_048, format: format) { [weak self] audioBuffer, _ in
+            self?.receive(audioBuffer)
+        }
+    }
+}
+
 /// Continuous speech capture for the length of a recording. The push-to-talk
 /// pipeline is built around a held key and one final transcript, while this
 /// needs phrases with timestamps, so that they can be matched to actions.
@@ -39,16 +125,14 @@ final class TeachNarrationCapture {
     private let audioEngine = AVAudioEngine()
     private let speechRecognizer: SFSpeechRecognizer?
     private let narrationAudioFileURL: URL
-    private let audioQueue = DispatchQueue(label: "clicky.teach.narration")
 
-    private var narrationAudioFile: AVAudioFile?
+    private var audioSink: TeachNarrationAudioSink?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var recognitionRolloverTimer: Timer?
 
-    /// Audio time written so far. Recognition timestamps are relative to their
-    /// own request, so this anchors each request back onto the recording.
-    private var framesWrittenSoFar: AVAudioFramePosition = 0
+    /// Recognition timestamps are relative to their own request. The frames
+    /// written so far anchor each new request back onto the recording.
     private var audioSampleRate: Double = 44_100
     private var currentRequestStartSeconds: Double = 0
 
@@ -80,24 +164,17 @@ final class TeachNarrationCapture {
         }
         audioSampleRate = inputFormat.sampleRate
 
-        let fileSettings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: inputFormat.sampleRate,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderBitRateKey: 48_000
-        ]
-        narrationAudioFile = try AVAudioFile(
+        let narrationAudioFile = try AVAudioFile(
             forWriting: narrationAudioFileURL,
-            settings: fileSettings,
-            commonFormat: inputFormat.commonFormat,
-            interleaved: inputFormat.isInterleaved
+            settings: TeachNarrationAudioSink.makeNarrationFileSettings(sampleRate: inputFormat.sampleRate),
+            commonFormat: .pcmFormatFloat32,
+            interleaved: false
         )
+        let newAudioSink = TeachNarrationAudioSink(audioFile: narrationAudioFile)
+        audioSink = newAudioSink
 
         startRecognitionRequest()
-
-        inputNode.installTap(onBus: 0, bufferSize: 2_048, format: inputFormat) { [weak self] audioBuffer, _ in
-            self?.receive(audioBuffer)
-        }
+        newAudioSink.installTap(on: inputNode, format: inputFormat)
 
         audioEngine.prepare()
         try audioEngine.start()
@@ -124,22 +201,12 @@ final class TeachNarrationCapture {
         recognitionTask?.cancel()
         recognitionTask = nil
         recognitionRequest = nil
-        narrationAudioFile = nil
+        audioSink?.setRecognitionRequest(nil)
+        audioSink?.closeAudioFile()
+        audioSink = nil
 
         return (completedSegments + latestRequestSegments)
             .sorted { $0.startSeconds < $1.startSeconds }
-    }
-
-    private func receive(_ audioBuffer: AVAudioPCMBuffer) {
-        audioQueue.sync {
-            recognitionRequest?.append(audioBuffer)
-            do {
-                try narrationAudioFile?.write(from: audioBuffer)
-                framesWrittenSoFar += AVAudioFramePosition(audioBuffer.frameLength)
-            } catch {
-                print("⚠️ Show Me Once: narration audio write failed: \(error.localizedDescription)")
-            }
-        }
     }
 
     private func startRecognitionRequest() {
@@ -152,11 +219,12 @@ final class TeachNarrationCapture {
         // On-device keeps the teacher's voice on their Mac when that's possible.
         newRequest.requiresOnDeviceRecognition = speechRecognizer.supportsOnDeviceRecognition
 
-        currentRequestStartSeconds = Double(framesWrittenSoFar) / audioSampleRate
+        currentRequestStartSeconds = Double(audioSink?.framesWrittenSoFar ?? 0) / audioSampleRate
         latestRequestSegments = []
 
         let requestStartSeconds = currentRequestStartSeconds
         recognitionRequest = newRequest
+        audioSink?.setRecognitionRequest(newRequest)
         recognitionTask = speechRecognizer.recognitionTask(with: newRequest) { [weak self] recognitionResult, recognitionError in
             guard let self else { return }
             if let recognitionResult {
