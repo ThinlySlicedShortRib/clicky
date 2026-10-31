@@ -1,0 +1,501 @@
+{
+  "adaptations" : [
+    {
+      "stepIdentifier" : "step-7",
+      "stepTitle" : "open coloring dropdown",
+      "whatChanged" : "the video's voronoi node has an intensity dropdown that picks how cells are coloured, but this version has no such dropdown and gives coloured cells through its color output, which is already linked to base color."
+    },
+    {
+      "stepIdentifier" : "step-10",
+      "stepTitle" : "drive roughness",
+      "whatChanged" : "the video drags from the voronoi node's grey fac output, but this version has no fac output and gives the grey single-value result through its distance output instead."
+    }
+  ],
+  "captureSourceDescription" : "rehearsal: Blender's own window export over a file bridge, not ScreenCaptureKit",
+  "costSnapshot" : {
+    "cachedPlanOriginalCostInUSD" : 0.2047393,
+    "cachedStepsReused" : 1,
+    "elapsedInSeconds" : 272.96505296230316,
+    "isCostEstimated" : true,
+    "isLessonPlanCached" : true,
+    "modelCallCount" : 27,
+    "naiveCallCount" : 272,
+    "naiveEstimatedCostInUSD" : 3.4905028999999996,
+    "naiveFloorEstimatedCostInUSD" : 0.13268341333333333,
+    "screensLookedAt" : 84,
+    "screensSentToModel" : 27,
+    "totalCostInUSD" : 0.22702976000000002,
+    "totalInputTokens" : 54,
+    "totalOutputTokens" : 11128
+  },
+  "finishedEveryStep" : true,
+  "ledgerEntries" : [
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-1",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4548,
+        "costInUSD" : 0.0020288,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 157,
+        "timeToFirstTextInSeconds" : 1.134097933769226,
+        "totalDurationInSeconds" : 2.5991899967193604
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-1",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2408,
+        "costInUSD" : 0.00025358,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 78,
+        "timeToFirstTextInSeconds" : 2.131356954574585,
+        "totalDurationInSeconds" : 3.363731026649475
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-2",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4593,
+        "costInUSD" : 0.0022318,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 159,
+        "timeToFirstTextInSeconds" : 1.524116039276123,
+        "totalDurationInSeconds" : 2.9937750101089478
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-2",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2380,
+        "costInUSD" : 0.000195,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 78,
+        "timeToFirstTextInSeconds" : 1.0055789947509766,
+        "totalDurationInSeconds" : 2.239642024040222
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-2",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4593,
+        "costInUSD" : 0.0042818,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 364,
+        "timeToFirstTextInSeconds" : 2.123631000518799,
+        "totalDurationInSeconds" : 4.013531923294067
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-2",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4593,
+        "costInUSD" : 0.0022018,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 156,
+        "timeToFirstTextInSeconds" : 1.8576529026031494,
+        "totalDurationInSeconds" : 3.564104914665222
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-2",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2380,
+        "costInUSD" : 0.0001895,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 67,
+        "timeToFirstTextInSeconds" : 1.3824719190597534,
+        "totalDurationInSeconds" : 2.4263349771499634
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-3",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4602,
+        "costInUSD" : 0.0022751,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 155,
+        "timeToFirstTextInSeconds" : 2.274938941001892,
+        "totalDurationInSeconds" : 3.9916019439697266
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-3",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2373,
+        "costInUSD" : 0.00019122999999999994,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 73,
+        "timeToFirstTextInSeconds" : 1.2481319904327393,
+        "totalDurationInSeconds" : 2.354766011238098
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-4",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4614,
+        "costInUSD" : 0.0031455,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 250,
+        "timeToFirstTextInSeconds" : 1.917457938194275,
+        "totalDurationInSeconds" : 3.3511639833450317
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-4",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2393,
+        "costInUSD" : 0.00039243000000000004,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 467,
+        "timeToFirstTextInSeconds" : 2.801159977912903,
+        "totalDurationInSeconds" : 3.9742560386657715
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-5",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 4748,
+        "costInUSD" : 0.0090053,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 833,
+        "timeToFirstTextInSeconds" : 9.054844975471497,
+        "totalDurationInSeconds" : 10.54980194568634
+      }
+    },
+    {
+      "purpose" : "answer_question",
+      "stepIdentifier" : "step-5",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 3479,
+        "costInUSD" : 0.0034537,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 288,
+        "timeToFirstTextInSeconds" : 3.341594934463501,
+        "totalDurationInSeconds" : 5.043579936027527
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-5",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3276,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.0291817,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 1573,
+        "timeToFirstTextInSeconds" : 13.238401889801025,
+        "totalDurationInSeconds" : 14.805822968482971
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-5",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3276,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.018371699999999998,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 492,
+        "timeToFirstTextInSeconds" : 3.823310971260071,
+        "totalDurationInSeconds" : 5.330565929412842
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-6",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3435,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.0194566,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 527,
+        "timeToFirstTextInSeconds" : 4.098353028297424,
+        "totalDurationInSeconds" : 5.871508002281189
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-6",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3435,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.0176221,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 352,
+        "timeToFirstTextInSeconds" : 2.273315906524658,
+        "totalDurationInSeconds" : 3.989454984664917
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-6",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 2415,
+        "cacheReadInputTokens" : 0,
+        "costInUSD" : 0.0008692000000000003,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 501,
+        "timeToFirstTextInSeconds" : 3.469197988510132,
+        "totalDurationInSeconds" : 4.469274997711182
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-7",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3259,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.021091999999999993,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 771,
+        "timeToFirstTextInSeconds" : 4.306246042251587,
+        "totalDurationInSeconds" : 6.815750002861023
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-8",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3359,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.018274,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 448,
+        "timeToFirstTextInSeconds" : 3.11858594417572,
+        "totalDurationInSeconds" : 5.183295011520386
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-9",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3444,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.017132,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 299,
+        "timeToFirstTextInSeconds" : 3.0363869667053223,
+        "totalDurationInSeconds" : 4.4131059646606445
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-9",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 2412,
+        "cacheReadInputTokens" : 0,
+        "costInUSD" : 0.0008478,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 274,
+        "timeToFirstTextInSeconds" : 2.2533559799194336,
+        "totalDurationInSeconds" : 3.5743629932403564
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-10",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3525,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.0214211,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 695,
+        "timeToFirstTextInSeconds" : 4.4346489906311035,
+        "totalDurationInSeconds" : 7.095970988273621
+      }
+    },
+    {
+      "purpose" : "locate_target",
+      "stepIdentifier" : "step-9",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 3488,
+        "cacheReadInputTokens" : 1472,
+        "costInUSD" : 0.0176024,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 328,
+        "timeToFirstTextInSeconds" : 3.0342609882354736,
+        "totalDurationInSeconds" : 4.441807985305786
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-9",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 0,
+        "cacheReadInputTokens" : 2412,
+        "costInUSD" : 0.00029152,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 263,
+        "timeToFirstTextInSeconds" : 1.9735100269317627,
+        "totalDurationInSeconds" : 2.953788995742798
+      }
+    },
+    {
+      "purpose" : "check_success",
+      "stepIdentifier" : "step-10",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 2421,
+        "cacheReadInputTokens" : 0,
+        "costInUSD" : 0.00116,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-haiku-5-5",
+        "outputTokens" : 1068,
+        "timeToFirstTextInSeconds" : 6.999354004859924,
+        "totalDurationInSeconds" : 8.633422017097473
+      }
+    },
+    {
+      "purpose" : "second_opinion",
+      "stepIdentifier" : "step-10",
+      "usage" : {
+        "backendName" : "claude CLI",
+        "cacheCreationInputTokens" : 2400,
+        "cacheReadInputTokens" : 0,
+        "costInUSD" : 0.013862100000000002,
+        "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+        "inputTokens" : 2,
+        "isCostEstimated" : true,
+        "modelIdentifier" : "claude-sonnet-5-5",
+        "outputTokens" : 412,
+        "timeToFirstTextInSeconds" : 4.835250973701477,
+        "totalDurationInSeconds" : 5.855180978775024
+      }
+    }
+  ],
+  "lessonTitle" : "procedural textures with voronoi",
+  "stepCount" : 10,
+  "stepsCompleted" : 10,
+  "whatYouLearned" : [
+    "add a generated texture to a material",
+    "change how the pattern looks",
+    "use one texture to control shininess"
+  ]
+}

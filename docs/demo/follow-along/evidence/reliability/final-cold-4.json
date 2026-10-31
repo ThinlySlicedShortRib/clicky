@@ -1,0 +1,45 @@
+{
+ "adaptations": [
+  {
+   "stepIdentifier": "step-7",
+   "stepTitle": "open coloring dropdown",
+   "whatChanged": "the video's voronoi node has an intensity/cells dropdown to choose the colouring, but this version has no such dropdown and always outputs flat coloured cells through its color output."
+  },
+  {
+   "stepIdentifier": "step-8",
+   "stepTitle": "choose cells",
+   "whatChanged": "the video picks cells from an intensity/cells dropdown on the voronoi node, but this version has no such dropdown and already shows flat coloured cells on the cube."
+  },
+  {
+   "stepIdentifier": "step-10",
+   "stepTitle": "drive roughness",
+   "whatChanged": "the video drags from the grey fac output on the voronoi node, but this version has no fac output and its black and white result comes from the distance output instead."
+  }
+ ],
+ "captureSourceDescription": "rehearsal: Blender's own window export over a file bridge, not ScreenCaptureKit",
+ "costSnapshot": {
+  "cachedPlanOriginalCostInUSD": 0.2047393,
+  "cachedStepsReused": 0,
+  "elapsedInSeconds": 182.39027500152588,
+  "isCostEstimated": true,
+  "isLessonPlanCached": true,
+  "modelCallCount": 19,
+  "naiveCallCount": 182,
+  "naiveEstimatedCostInUSD": 2.287875672727273,
+  "naiveFloorEstimatedCostInUSD": 0.115937185,
+  "screensLookedAt": 58,
+  "screensSentToModel": 19,
+  "totalCostInUSD": 0.14337434000000002,
+  "totalInputTokens": 38,
+  "totalOutputTokens": 9020
+ },
+ "finishedEveryStep": true,
+ "lessonTitle": "procedural textures with voronoi",
+ "stepCount": 10,
+ "stepsCompleted": 10,
+ "whatYouLearned": [
+  "add a generated texture to a material",
+  "change how the pattern looks",
+  "use one texture to control shininess"
+ ]
+}

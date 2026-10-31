@@ -1,0 +1,40 @@
+{
+ "adaptations": [
+  {
+   "stepIdentifier": "step-7",
+   "stepTitle": "open coloring dropdown",
+   "whatChanged": "the video's voronoi node has an intensity dropdown that picks how cells are coloured, but this version has no such dropdown and gives coloured cells through its color output, which is already linked to base color."
+  },
+  {
+   "stepIdentifier": "step-10",
+   "stepTitle": "drive roughness",
+   "whatChanged": "the video drags from the voronoi node's grey fac output, but this version has no fac output and gives the grey single-value result through its distance output instead."
+  }
+ ],
+ "captureSourceDescription": "rehearsal: Blender's own window export over a file bridge, not ScreenCaptureKit",
+ "costSnapshot": {
+  "cachedPlanOriginalCostInUSD": 0.2047393,
+  "cachedStepsReused": 1,
+  "elapsedInSeconds": 272.96505296230316,
+  "isCostEstimated": true,
+  "isLessonPlanCached": true,
+  "modelCallCount": 27,
+  "naiveCallCount": 272,
+  "naiveEstimatedCostInUSD": 3.4905028999999996,
+  "naiveFloorEstimatedCostInUSD": 0.13268341333333333,
+  "screensLookedAt": 84,
+  "screensSentToModel": 27,
+  "totalCostInUSD": 0.22702976000000002,
+  "totalInputTokens": 54,
+  "totalOutputTokens": 11128
+ },
+ "finishedEveryStep": true,
+ "lessonTitle": "procedural textures with voronoi",
+ "stepCount": 10,
+ "stepsCompleted": 10,
+ "whatYouLearned": [
+  "add a generated texture to a material",
+  "change how the pattern looks",
+  "use one texture to control shininess"
+ ]
+}

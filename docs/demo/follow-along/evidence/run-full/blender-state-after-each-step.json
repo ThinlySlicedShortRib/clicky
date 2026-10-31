@@ -1,0 +1,135 @@
+{
+ "step-1": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface"
+  ],
+  "voronoi": null
+ },
+ "step-2": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface"
+  ],
+  "voronoi": null
+ },
+ "step-3": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface"
+  ],
+  "voronoi": null
+ },
+ "step-4": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial",
+   "ShaderNodeTexVoronoi"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface"
+  ],
+  "voronoi": {
+   "scale": 5.0,
+   "feature": "F1",
+   "distance": "EUCLIDEAN"
+  }
+ },
+ "step-5": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial",
+   "ShaderNodeTexVoronoi"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface"
+  ],
+  "voronoi": {
+   "scale": 5.0,
+   "feature": "F1",
+   "distance": "EUCLIDEAN"
+  }
+ },
+ "step-6": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial",
+   "ShaderNodeTexVoronoi"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface",
+   "Voronoi Texture.Color -> Principled BSDF.Base Color"
+  ],
+  "voronoi": {
+   "scale": 5.0,
+   "feature": "F1",
+   "distance": "EUCLIDEAN"
+  }
+ },
+ "step-9": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial",
+   "ShaderNodeTexVoronoi"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface",
+   "Voronoi Texture.Color -> Principled BSDF.Base Color"
+  ],
+  "voronoi": {
+   "scale": 10.0,
+   "feature": "F1",
+   "distance": "EUCLIDEAN"
+  }
+ },
+ "step-10": {
+  "workspace": "Shading",
+  "mode": "OBJECT",
+  "viewportShading": "MATERIAL",
+  "nodes": [
+   "ShaderNodeBsdfPrincipled",
+   "ShaderNodeOutputMaterial",
+   "ShaderNodeTexVoronoi"
+  ],
+  "links": [
+   "Principled BSDF.BSDF -> Material Output.Surface",
+   "Voronoi Texture.Color -> Principled BSDF.Base Color",
+   "Voronoi Texture.Distance -> Principled BSDF.Roughness"
+  ],
+  "voronoi": {
+   "scale": 10.0,
+   "feature": "F1",
+   "distance": "EUCLIDEAN"
+  }
+ }
+}

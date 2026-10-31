@@ -1,0 +1,193 @@
+{
+  "applicationName" : "Blender",
+  "applicationVersionInVideo" : "2.80",
+  "generation" : {
+    "brainCalls" : [
+      {
+        "purpose" : "plan_transcript",
+        "usage" : {
+          "backendName" : "claude CLI",
+          "cacheCreationInputTokens" : 2849,
+          "cacheReadInputTokens" : 0,
+          "costInUSD" : 0.0478608,
+          "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+          "inputTokens" : 2,
+          "isCostEstimated" : true,
+          "modelIdentifier" : "claude-sonnet-5-5",
+          "outputTokens" : 3621,
+          "timeToFirstTextInSeconds" : 10.389294028282166,
+          "totalDurationInSeconds" : 25.020963072776794
+        }
+      },
+      {
+        "purpose" : "plan_key_frames",
+        "usage" : {
+          "backendName" : "claude CLI",
+          "cacheCreationInputTokens" : 10581,
+          "cacheReadInputTokens" : 0,
+          "costInUSD" : 0.1568785,
+          "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+          "inputTokens" : 2,
+          "isCostEstimated" : true,
+          "modelIdentifier" : "claude-sonnet-5-5",
+          "outputTokens" : 11415,
+          "timeToFirstTextInSeconds" : 55.200533986091614,
+          "totalDurationInSeconds" : 79.27088499069214
+        }
+      }
+    ],
+    "generatedAtISO8601" : "2026-10-31T19:22:23Z",
+    "modelValue" : "claude-sonnet-5-5"
+  },
+  "lessonTitle" : "procedural textures with voronoi",
+  "schemaVersion" : 1,
+  "source" : {
+    "channelName" : "Blender",
+    "durationInSeconds" : 180,
+    "licenseDescription" : "Creative Commons Attribution license (reuse allowed)",
+    "title" : "Procedural Textures - Blender 2.80 Fundamentals",
+    "uploadDate" : "20190718",
+    "videoIdentifier" : "_deRNqDcwRk",
+    "videoURL" : "https://www.youtube.com/watch?v=_deRNqDcwRk"
+  },
+  "steps" : [
+    {
+      "actionKind" : "click",
+      "goal" : "get into a workspace that shows a node editor for the cube's material, with the cube visible in a 3d view",
+      "id" : "step-1",
+      "keyFrameFileName" : "step-1.jpg",
+      "spokenLine" : "let's start where the video does, in a view with a node editor and a cube. click the shading tab at the top of the window.",
+      "successLine" : "nice, node editor's ready",
+      "targetDescription" : "the tab labelled shading in the row of workspace tabs along the top of the window, between texture paint and animation. the layout tab at the far left of that row is the one currently highlighted",
+      "title" : "open shading workspace",
+      "videoInterfaceDescription" : "blender 2.80 in the layout workspace. the top row of workspace tabs reads layout (highlighted, at the left), modeling, sculpting, uv editing, texture paint, shading, animation, rendering, compositing. the shading tab sits near the top centre of the window. below it is a large 3d viewport (object mode) with a grey cube outlined in orange, a camera and a light, and the outliner and properties panels are on the right. a timeline runs along the bottom. there is no node editor visible yet. the mouse pointer is in the empty part of the viewport on the right side.",
+      "videoTimestampInSeconds" : 42,
+      "visualSuccessCheck" : "the screen shows a 3d view with a cube and a node editor containing connected material nodes"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "open the menu used to add new nodes in the node editor",
+      "id" : "step-2",
+      "keyFrameFileName" : "step-2.jpg",
+      "spokenLine" : "this is where all the texture types live. click the add menu in the header of the node editor.",
+      "successLine" : "menu's open",
+      "targetDescription" : "the add menu in the header bar of the node editor in the bottom half of the screen, between select and node",
+      "title" : "open add menu",
+      "videoInterfaceDescription" : "the shading workspace is now open and its tab is highlighted in the top row. the top half shows a 3d viewport in a rendered look with a pale cube outlined in orange, a camera, a light, a small reflective ball and a plain white ball in the lower right corner. a file browser sits at the left. the bottom half is the node editor. its header reads, left to right, an editor type icon, an object dropdown, view, select, add, node, a checked use nodes box, a slot 1 dropdown and a material name field. the add item sits at the left of that header, just right of select. below the header a shader node with rows like subsurface, metallic, specular 0.500 and roughness 0.400 is partly visible in the middle. no menu is open yet.",
+      "videoTimestampInSeconds" : 47,
+      "visualSuccessCheck" : "a menu with a list of node categories is open over the node editor"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "open the list of texture nodes",
+      "id" : "step-3",
+      "keyFrameFileName" : "step-3.jpg",
+      "spokenLine" : "most of these are generated patterns, made from maths instead of pixels. click the texture category.",
+      "successLine" : "there's the texture list",
+      "targetDescription" : "the texture entry in the add menu's list of categories, below shader and above color. it turns blue when the pointer is on it and has a small arrow at its right edge",
+      "title" : "open texture category",
+      "videoInterfaceDescription" : "the add menu is open under the add item in the node editor header. its list reads search, input, output, shader, texture (highlighted blue), color, vector, converter, script, group, layout. a second list is open to the right of it with brick texture, checker texture, environment texture, gradient texture, ies texture, image texture, magic texture, musgrave texture, noise texture, point density, sky texture (highlighted blue, with the pointer on it), voronoi texture and wave texture. the shading workspace is still showing, with the cube in the viewport above.",
+      "videoTimestampInSeconds" : 66,
+      "visualSuccessCheck" : "a list of several texture node names is showing beside the add menu"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "choose the voronoi texture so a new node of that type is created",
+      "id" : "step-4",
+      "keyFrameFileName" : "step-4.jpg",
+      "spokenLine" : "we'll use voronoi, a cracked, cell-like pattern. click it in the list.",
+      "successLine" : "voronoi picked",
+      "targetDescription" : "the voronoi texture entry in the texture submenu list, second from the bottom, between sky texture and wave texture",
+      "title" : "pick voronoi texture",
+      "videoInterfaceDescription" : "the add menu and its texture submenu are both open over the node editor. the submenu lists brick texture down to wave texture, with sky texture highlighted in blue and the pointer resting on it. voronoi texture is the next line down, just above wave texture, and is not highlighted yet. the texture entry in the main list is also highlighted blue. the cube in the viewport above is still plain.",
+      "videoTimestampInSeconds" : 66,
+      "visualSuccessCheck" : "a new texture node has appeared in the node editor and is following the mouse pointer"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "place the new texture node in an empty area of the node editor so it stops moving",
+      "id" : "step-5",
+      "keyFrameFileName" : "step-5.jpg",
+      "spokenLine" : "the new node is stuck to your mouse. click on an empty spot to the left of the other nodes to set it down.",
+      "successLine" : "node's placed",
+      "targetDescription" : "an empty dark area of the node editor to the left of the existing shader node, with room for the new node",
+      "title" : "drop the node",
+      "videoInterfaceDescription" : "a new node with an orange header reading voronoi texture is in the node editor, left of the shader node. it has color and fac output dots on its right edge, three dropdowns reading intensity, distance and closest, a vector input and a scale field reading 5.000. the status text in the bar above the node editor reads 'auto-offset set to right - press t to toggle direction' followed by dx and dy numbers, which shows the node is still being moved. the shader node to its right shows rows such as subsurface, metallic, specular 0.500 and roughness 0.400. the cube in the viewport above is still plain.",
+      "videoTimestampInSeconds" : 71,
+      "visualSuccessCheck" : "the new texture node sits still in an empty area of the node editor with no move in progress"
+    },
+    {
+      "actionKind" : "drag",
+      "dragDestinationDescription" : "the yellow base color input dot on the left edge of the shader node, level with the base color row that has a white colour swatch, above subsurface",
+      "goal" : "feed the texture's color result into the surface shader's base color so the cube takes on the pattern",
+      "id" : "step-6",
+      "keyFrameFileName" : "step-6.jpg",
+      "spokenLine" : "now wire it in. drag from the color dot on the voronoi node to the base color dot on the shader node.",
+      "successLine" : "the cube has a pattern now",
+      "targetDescription" : "the yellow color output dot on the right edge of the voronoi node, the upper of its two output dots, next to the label color",
+      "title" : "connect to base color",
+      "videoInterfaceDescription" : "the voronoi texture node now sits at the left of the node editor with its color dot (yellow) and fac dot (grey) on its right edge, and the pointer is just right of the color dot. its dropdowns read intensity, distance and closest and its scale field reads 5.000. to its right is the shader node, with dropdowns reading ggx and christensen-burley, then a base color row with a white swatch and a yellow dot on its left edge, then subsurface 0.000, subsurface radius, subsurface color, metallic, specular 0.500, specular tint, roughness 0.400, anisotropic, anisotropic rotation and sheen. an output node at the top right shows surface, volume and displacement. no link connects the two nodes yet. the words 'middle mouse' appear over the viewport at the left, and the cube is still plain.",
+      "videoTimestampInSeconds" : 73,
+      "visualSuccessCheck" : "a link joins the texture node to the shader node and the cube shows a cracked, cell-like pattern instead of a plain colour"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "open the dropdown on the texture node that controls how its cells are coloured",
+      "id" : "step-7",
+      "keyFrameFileName" : "step-7.jpg",
+      "spokenLine" : "this node has a few settings to play with. click the dropdown that currently says intensity.",
+      "successLine" : "options are showing",
+      "targetDescription" : "the dropdown on the voronoi node that currently reads intensity, the first of three dropdowns, just below the fac output and above the one reading distance",
+      "title" : "open coloring dropdown",
+      "videoInterfaceDescription" : "a grey link now runs from the color dot of the voronoi texture node up to the base color dot on the shader node. the cube in the viewport is shown close up with a blurry black-and-white pattern of dark blobs. the voronoi node's dropdowns read intensity, distance and closest, all closed, with scale 5.000 below. the pointer is in the empty space just right of the node.",
+      "videoTimestampInSeconds" : 87,
+      "visualSuccessCheck" : "a small list of options is open next to the texture node"
+    },
+    {
+      "actionKind" : "click",
+      "goal" : "switch the colouring option so each cell gets its own flat colour",
+      "id" : "step-8",
+      "keyFrameFileName" : "step-8.jpg",
+      "spokenLine" : "pick cells from the list. it gives a stained glass look.",
+      "successLine" : "stained glass cube",
+      "targetDescription" : "the cells option in the small open list, the second line under intensity. it turns blue when the pointer is on it",
+      "title" : "choose cells",
+      "videoInterfaceDescription" : "the first dropdown on the voronoi node is open, showing a small list with intensity and cells. cells is highlighted blue with the pointer on it, and a greyed label reading coloring sits just below the list. the words 'left mouse' appear over the viewport at the left. the cube still shows the earlier blurry black-and-white pattern.",
+      "videoTimestampInSeconds" : 89,
+      "visualSuccessCheck" : "the cube shows a pattern of flat coloured cells like stained glass"
+    },
+    {
+      "actionKind" : "type_value",
+      "goal" : "set the texture's scale to a new value so the cell size on the cube visibly changes",
+      "id" : "step-9",
+      "keyFrameFileName" : "step-9.jpg",
+      "spokenLine" : "double-click the scale value on the voronoi node and type 10. no matter how far you zoom in, it stays sharp.",
+      "successLine" : "still crisp at any size",
+      "targetDescription" : "the scale number field at the bottom of the voronoi node, below the vector input, with small arrows at each end when the pointer is over it",
+      "title" : "change the scale",
+      "valueToType" : "10",
+      "videoInterfaceDescription" : "the cube in the viewport is covered in small flat cells in many pastel colours, such as pink, green, blue and yellow, with sharp edges. the first dropdown on the voronoi node now reads cells, and the others read distance and closest. the scale field at the bottom of the node reads 11.700 and shows small arrows at its left and right ends. the link from color to base color is still in place.",
+      "videoTimestampInSeconds" : 105,
+      "visualSuccessCheck" : "the cells on the cube look noticeably smaller and more numerous than before, with sharp edges"
+    },
+    {
+      "actionKind" : "drag",
+      "dragDestinationDescription" : "the roughness input dot on the left edge of the shader node, level with the roughness row that has a blue bar reading 0.400, between specular tint and anisotropic",
+      "goal" : "use the texture's black and white result to control the surface's roughness",
+      "id" : "step-10",
+      "keyFrameFileName" : "step-10.jpg",
+      "spokenLine" : "the grayscale output works great for shininess. drag from the fac dot on the voronoi node to the roughness dot on the shader.",
+      "successLine" : "shiny and rough together",
+      "targetDescription" : "the grey fac output dot on the right edge of the voronoi node, the lower of its two output dots, just below the color dot",
+      "title" : "drive roughness",
+      "videoInterfaceDescription" : "the cube in the viewport is pale grey with faceted cell shapes in shades of grey. the voronoi node reads cells, distance and closest with scale 6.700. a grey link now leaves the fac dot (the lower output dot) and goes up to the base color dot on the shader node, and the color dot has no link. the roughness row on the shader node shows a blue bar reading 0.400, and the pointer is over it. the other shader rows (specular 0.500, sheen tint 0.500, clearcoat roughness 0.030) are visible below.",
+      "videoTimestampInSeconds" : 142,
+      "visualSuccessCheck" : "the cube looks shiny in some patches and dull in others, following the cell pattern"
+    }
+  ],
+  "whatYouWillLearn" : [
+    "add a generated texture to a material",
+    "change how the pattern looks",
+    "use one texture to control shininess"
+  ]
+}
