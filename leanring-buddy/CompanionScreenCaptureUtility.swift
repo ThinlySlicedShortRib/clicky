@@ -13,6 +13,8 @@ import ScreenCaptureKit
 struct CompanionScreenCapture {
     let imageData: Data
     let label: String
+    /// The N in the [POINT:...:screenN] tag. 1 is always the cursor screen.
+    let screenNumber: Int
     let isCursorScreen: Bool
     let displayWidthInPoints: Int
     let displayHeightInPoints: Int
@@ -21,14 +23,43 @@ struct CompanionScreenCapture {
     let screenshotHeightInPixels: Int
 }
 
+enum CompanionScreenCaptureError: LocalizedError {
+    case screenRecordingPermissionMissing
+
+    /// Includes the exact path because this is shown to whoever is setting up
+    /// the machine, and only a human can flip this switch.
+    var errorDescription: String? {
+        switch self {
+        case .screenRecordingPermissionMissing:
+            let bundlePath = Bundle.main.bundlePath
+            return "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add \(bundlePath) if it isn't listed), then quit and relaunch Clicky."
+        }
+    }
+}
+
 @MainActor
 enum CompanionScreenCaptureUtility {
+    /// Longest edge of the image sent to the model, in pixels.
+    static let maximumScreenshotDimension = 1280
 
     /// Captures all connected displays as JPEG data, labeling each with
     /// whether the user's cursor is on that screen. This gives the AI
     /// full context across multiple monitors.
     static func captureAllScreensAsJPEG() async throws -> [CompanionScreenCapture] {
-        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        // The preflight alone can lag a fresh grant, so a failed preflight only
+        // counts as "denied" once a real capture has also failed. Without it,
+        // the capture failure would surface as a generic ScreenCaptureKit error.
+        let hasScreenRecordingPermission = CGPreflightScreenCaptureAccess()
+
+        let content: SCShareableContent
+        do {
+            content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        } catch {
+            if !hasScreenRecordingPermission {
+                throw CompanionScreenCaptureError.screenRecordingPermissionMissing
+            }
+            throw error
+        }
 
         guard !content.displays.isEmpty else {
             throw NSError(domain: "CompanionScreenCapture", code: -1,
@@ -73,28 +104,34 @@ enum CompanionScreenCaptureUtility {
             // Use NSScreen.frame (AppKit coordinates, bottom-left origin) so
             // displayFrame is in the same coordinate system as NSEvent.mouseLocation
             // and the overlay window's screenFrame in BlueCursorView.
+            let primaryDisplayHeight = NSScreen.screens.first?.frame.height ?? display.frame.height
             let displayFrame = nsScreenByDisplayID[display.displayID]?.frame
-                ?? CGRect(x: display.frame.origin.x, y: display.frame.origin.y,
-                          width: CGFloat(display.width), height: CGFloat(display.height))
+                ?? ScreenshotCoordinateMapper.appKitFrame(fromCoreGraphicsFrame: display.frame, primaryDisplayHeight: primaryDisplayHeight)
             let isCursorScreen = displayFrame.contains(mouseLocation)
 
             let filter = SCContentFilter(display: display, excludingWindows: ownAppWindows)
 
             let configuration = SCStreamConfiguration()
-            let maxDimension = 1280
-            let aspectRatio = CGFloat(display.width) / CGFloat(display.height)
-            if display.width >= display.height {
-                configuration.width = maxDimension
-                configuration.height = Int(CGFloat(maxDimension) / aspectRatio)
-            } else {
-                configuration.height = maxDimension
-                configuration.width = Int(CGFloat(maxDimension) * aspectRatio)
-            }
-
-            let cgImage = try await SCScreenshotManager.captureImage(
-                contentFilter: filter,
-                configuration: configuration
+            let screenshotPixelSize = ScreenshotCoordinateMapper.screenshotPixelSize(
+                forDisplayWidth: display.width,
+                displayHeight: display.height,
+                maximumDimension: maximumScreenshotDimension
             )
+            configuration.width = screenshotPixelSize.width
+            configuration.height = screenshotPixelSize.height
+
+            let cgImage: CGImage
+            do {
+                cgImage = try await SCScreenshotManager.captureImage(
+                    contentFilter: filter,
+                    configuration: configuration
+                )
+            } catch {
+                if !hasScreenRecordingPermission {
+                    throw CompanionScreenCaptureError.screenRecordingPermissionMissing
+                }
+                throw error
+            }
 
             guard let jpegData = NSBitmapImageRep(cgImage: cgImage)
                     .representation(using: .jpeg, properties: [.compressionFactor: 0.8]) else {
@@ -113,12 +150,15 @@ enum CompanionScreenCaptureUtility {
             capturedScreens.append(CompanionScreenCapture(
                 imageData: jpegData,
                 label: screenLabel,
+                screenNumber: displayIndex + 1,
                 isCursorScreen: isCursorScreen,
                 displayWidthInPoints: Int(displayFrame.width),
                 displayHeightInPoints: Int(displayFrame.height),
                 displayFrame: displayFrame,
-                screenshotWidthInPixels: configuration.width,
-                screenshotHeightInPixels: configuration.height
+                // The delivered image, not the requested size, is the
+                // coordinate space the model reads off.
+                screenshotWidthInPixels: cgImage.width,
+                screenshotHeightInPixels: cgImage.height
             ))
         }
 

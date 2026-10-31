@@ -167,6 +167,11 @@ struct BlueCursorView: View {
 
     // MARK: - Onboarding Video Layout
 
+    /// Where the triangle's tip sits relative to its center at the resting
+    /// -35° rotation: the 16pt triangle's top vertex is 9.24pt above center,
+    /// and the rotation swings it up and to the left.
+    private let triangleTipOffsetFromCenter = CGPoint(x: -5.3, y: -7.57)
+
     private let onboardingVideoPlayerWidth: CGFloat = 330
     private let onboardingVideoPlayerHeight: CGFloat = 186
 
@@ -460,17 +465,18 @@ struct BlueCursorView: View {
         // Convert the AppKit screen location to SwiftUI coordinates for this screen
         let targetInSwiftUI = convertScreenPointToSwiftUICoordinates(screenLocation)
 
-        // Offset the target so the buddy sits beside the element rather than
-        // directly on top of it — 8px to the right, 12px below.
+        // Offset the triangle's center so its tip lands exactly on the element,
+        // the way a real mouse pointer's hot spot does.
         let offsetTarget = CGPoint(
-            x: targetInSwiftUI.x + 8,
-            y: targetInSwiftUI.y + 12
+            x: targetInSwiftUI.x - triangleTipOffsetFromCenter.x,
+            y: targetInSwiftUI.y - triangleTipOffsetFromCenter.y
         )
 
-        // Clamp target to screen bounds with padding
+        // Clamp to screen bounds. The padding is the triangle's half width, so
+        // menu bar items, which sit within 20pt of the edge, stay reachable.
         let clampedTarget = CGPoint(
-            x: max(20, min(offsetTarget.x, screenFrame.width - 20)),
-            y: max(20, min(offsetTarget.y, screenFrame.height - 20))
+            x: max(8, min(offsetTarget.x, screenFrame.width - 8)),
+            y: max(8, min(offsetTarget.y, screenFrame.height - 8))
         )
 
         // Record the current cursor position so we can detect if the user
@@ -574,6 +580,13 @@ struct BlueCursorView: View {
 
         // Rotate back to default pointer angle now that we've arrived
         triangleRotationDegrees = -35.0
+
+        companionManager.buddyDidArriveAtTarget(
+            tipGlobalAppKitLocation: CGPoint(
+                x: screenFrame.origin.x + cursorPosition.x + triangleTipOffsetFromCenter.x,
+                y: screenFrame.origin.y + screenFrame.height - (cursorPosition.y + triangleTipOffsetFromCenter.y)
+            )
+        )
 
         // Reset navigation bubble state — start small for the scale-bounce entrance
         navigationBubbleText = ""
@@ -832,6 +845,12 @@ class OverlayWindowManager {
                 window.contentView = nil
             }
         })
+    }
+
+    /// Current overlay window frames in global AppKit coordinates, for
+    /// headless checks.
+    var overlayWindowFrames: [CGRect] {
+        overlayWindows.map(\.frame)
     }
 
     func isShowingOverlay() -> Bool {

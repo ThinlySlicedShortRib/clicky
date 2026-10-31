@@ -34,10 +34,29 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
     private var sparkleUpdaterController: SPUStandardUpdaterController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // A CLI that exits while its stdin is being written raises SIGPIPE,
+        // which would otherwise kill the whole app instead of failing the call.
+        signal(SIGPIPE, SIG_IGN)
+
+        // Headless flags run a scripted check and exit without any menu bar
+        // UI, so child agents can verify the app without a human at the hotkey.
+        if let headlessCommand = HeadlessCommand.parse(arguments: CommandLine.arguments) {
+            Task {
+                await HeadlessCommandRunner(companionManager: companionManager).run(headlessCommand)
+            }
+            return
+        }
+
         print("🎯 Clicky: Starting...")
         print("🎯 Clicky: Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown")")
 
-        UserDefaults.standard.register(defaults: ["NSInitialToolTipDelay": 0])
+        // Onboarding off by default: it streams a remote video, plays music, and
+        // collects an email, none of which belong in a demo base. The panel's
+        // "Watch Onboarding Again" link still replays it.
+        UserDefaults.standard.register(defaults: [
+            "NSInitialToolTipDelay": 0,
+            "hasCompletedOnboarding": true
+        ])
 
         ClickyAnalytics.configure()
         ClickyAnalytics.trackAppOpened()
@@ -49,7 +68,8 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         if !companionManager.hasCompletedOnboarding || !companionManager.allPermissionsGranted {
             menuBarPanelManager?.showPanelOnLaunch()
         }
-        registerAsLoginItemIfNeeded()
+        // Not calling registerAsLoginItemIfNeeded(): it would make a dev build
+        // in a scratch checkout start on every login.
         // startSparkleUpdater()
     }
 

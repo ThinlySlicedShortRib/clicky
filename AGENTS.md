@@ -5,27 +5,27 @@
 
 ## Overview
 
-macOS menu bar companion app. Lives entirely in the macOS status bar (no dock icon, no main window). Clicking the menu bar icon opens a custom floating panel with companion voice controls. Uses push-to-talk (ctrl+option) to capture voice input, transcribes it via AssemblyAI streaming, and sends the transcript + a screenshot of the user's screen to Claude. Claude responds with text (streamed via SSE) and voice (ElevenLabs TTS). A blue cursor overlay can fly to and point at UI elements Claude references on any connected monitor.
+macOS menu bar companion app. Lives entirely in the macOS status bar (no dock icon, no main window). Clicking the menu bar icon opens a custom floating panel with companion voice controls. Uses push-to-talk (ctrl+option) to capture voice input, transcribes it via Apple Speech, and sends the transcript + a screenshot of the user's screen to a `Brain`, which by default shells out to the logged-in `claude` CLI. Replies are spoken via `say`. A blue cursor overlay can fly to and point at UI elements Claude references on any connected monitor.
 
-All API keys live on a Cloudflare Worker proxy — nothing sensitive ships in the app.
+**This fork is the foundation for demo builds. Read `docs/FOUNDATION.md` first**: it covers building, swapping models, headless checks, measured latency, and what is and isn't verified. No keys or Cloudflare Worker are needed; the upstream Worker sections below are kept for reference only.
 
 ## Architecture
 
 - **App Type**: Menu bar-only (`LSUIElement=true`), no dock icon or main window
 - **Framework**: SwiftUI (macOS native) with AppKit bridging for menu bar panel and cursor overlay
 - **Pattern**: MVVM with `@StateObject` / `@Published` state management
-- **AI Chat**: Claude (Sonnet 4.6 default, Opus 4.6 optional) via Cloudflare Worker proxy with SSE streaming
-- **Speech-to-Text**: AssemblyAI real-time streaming (`u3-rt-pro` model) via websocket, with OpenAI and Apple Speech as fallbacks
-- **Text-to-Speech**: ElevenLabs (`eleven_flash_v2_5` model) via Cloudflare Worker proxy
+- **AI Chat**: `Brain` protocol. Default is the `claude` CLI (`claude-sonnet-5-5`) in stream-json mode, with `codex` as the alternate. One config value, `BrainModel` in Info.plist, selects it; `CLICKY_BRAIN_MODEL` overrides it
+- **Speech-to-Text**: Apple Speech by default (`VoiceTranscriptionProvider` in Info.plist). AssemblyAI and OpenAI providers remain but need keys
+- **Text-to-Speech**: macOS `say` behind `CompanionTextToSpeechClient`
 - **Screen Capture**: ScreenCaptureKit (macOS 14.2+), multi-monitor support
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
-- **Analytics**: PostHog via `ClickyAnalytics.swift`
+- **Analytics**: None. `ClickyAnalytics.swift` is a no-op seam; PostHog was removed
 
-### API Proxy (Cloudflare Worker)
+### API Proxy (Cloudflare Worker, unused here)
 
-The app never calls external APIs directly. All requests go through a Cloudflare Worker (`worker/src/index.ts`) that holds the real API keys as secrets.
+Upstream never calls external APIs directly. All requests go through a Cloudflare Worker (`worker/src/index.ts`) that holds the real API keys as secrets.
 
 | Route | Upstream | Purpose |
 |-------|----------|---------|
@@ -53,7 +53,7 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | File | Lines | Purpose |
 |------|-------|---------|
 | `leanring_buddyApp.swift` | ~89 | Menu bar app entry point. Uses `@NSApplicationDelegateAdaptor` with `CompanionAppDelegate` which creates `MenuBarPanelManager` and starts `CompanionManager`. No main window — the app lives entirely in the status bar. |
-| `CompanionManager.swift` | ~1026 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
+| `CompanionManager.swift` | ~1057 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
 | `MenuBarPanelManager.swift` | ~243 | NSStatusItem + custom NSPanel lifecycle. Creates the menu bar icon, manages the floating companion panel (show/hide/position), installs click-outside-to-dismiss monitor. |
 | `CompanionPanelView.swift` | ~761 | SwiftUI panel content for the menu bar dropdown. Shows companion status, push-to-talk instructions, model picker (Sonnet/Opus), permissions UI, DM feedback button, and quit button. Dark aesthetic using `DS` design system. |
 | `OverlayWindow.swift` | ~881 | Full-screen transparent overlay hosting the blue cursor, response text, waveform, and spinner. Handles cursor animation, element pointing with bezier arcs, multi-monitor coordinate mapping, and fade-out transitions. |
@@ -66,12 +66,17 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `AppleSpeechTranscriptionProvider.swift` | ~147 | Local fallback transcription provider backed by Apple's Speech framework. |
 | `BuddyAudioConversionSupport.swift` | ~108 | Audio conversion helpers. Converts live mic buffers to PCM16 mono audio and builds WAV payloads for upload-based providers. |
 | `GlobalPushToTalkShortcutMonitor.swift` | ~132 | System-wide push-to-talk monitor. Owns the listen-only `CGEvent` tap and publishes press/release transitions. |
-| `ClaudeAPI.swift` | ~291 | Claude vision API client with streaming (SSE) and non-streaming modes. TLS warmup optimization, image MIME detection, conversation history support. |
+| `Brain.swift` | ~120 | `Brain` protocol, request/response types, `BrainUsage` (tokens, cost, timing), and `BrainConfiguration`, which turns the single `BrainModel` value into a backend. |
+| `CLIBrains.swift` | ~550 | `ClaudeCLIBrain` and `CodexCLIBrain`, plus the subprocess runner with streaming stdout, cancellation, and timeouts. |
+| `SayTTSClient.swift` | ~155 | `CompanionTextToSpeechClient` seam and the `say`-based client. Picks the best installed English voice. Interruptible. |
+| `ScreenshotCoordinateMapper.swift` | ~100 | Single source of truth for mapping screenshot pixels to display points and global AppKit coordinates, and for picking the target screen. |
+| `HeadlessCommandRunner.swift` | ~1040 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `ClaudeAPI.swift` | ~291 | Unused here. Claude vision API client with streaming (SSE) and non-streaming modes. |
 | `OpenAIAPI.swift` | ~142 | OpenAI GPT vision API client. |
-| `ElevenLabsTTSClient.swift` | ~81 | ElevenLabs TTS client. Sends text to the Worker proxy, plays back audio via `AVAudioPlayer`. Exposes `isPlaying` for transient cursor scheduling. |
+| `ElevenLabsTTSClient.swift` | ~81 | Unused here, but conforms to `CompanionTextToSpeechClient`. Sends text to the Worker proxy, plays back audio via `AVAudioPlayer`. |
 | `ElementLocationDetector.swift` | ~335 | Detects UI element locations in screenshots for cursor pointing. |
 | `DesignSystem.swift` | ~880 | Design system tokens — colors, corner radii, shared styles. All UI references `DS.Colors`, `DS.CornerRadius`, etc. |
-| `ClickyAnalytics.swift` | ~121 | PostHog analytics integration for usage tracking. |
+| `ClickyAnalytics.swift` | ~120 | No-op analytics seam. Call sites remain so a build can add its own project. |
 | `WindowPositionManager.swift` | ~262 | Window placement logic, Screen Recording permission flow, and accessibility permission helpers. |
 | `AppBundleConfiguration.swift` | ~28 | Runtime configuration reader for keys stored in the app bundle Info.plist. |
 | `worker/src/index.ts` | ~142 | Cloudflare Worker proxy. Three routes: `/chat` (Claude), `/tts` (ElevenLabs), `/transcribe-token` (AssemblyAI temp token). |
@@ -79,18 +84,19 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 ## Build & Run
 
 ```bash
-# Open in Xcode
-open leanring-buddy.xcodeproj
-
-# Select the leanring-buddy scheme, set signing team, Cmd+R to build and run
+scripts/build-and-run.sh               # build, sign, relaunch
+scripts/build-and-run.sh --build-only  # build and sign only
+scripts/headless.sh --headless-self-test
 
 # Known non-blocking warnings: Swift 6 concurrency warnings,
 # deprecated onChange warning in OverlayWindow.swift. Do NOT attempt to fix these.
 ```
 
-**Do NOT run `xcodebuild` from the terminal** — it invalidates TCC (Transparency, Consent, and Control) permissions and the app will need to re-request screen recording, accessibility, etc.
+Build through `scripts/build-and-run.sh`. It signs with the stable `Apple Development` identity, which keeps TCC (Transparency, Consent, and Control) permissions across rebuilds. Do not change the identity or bundle ID, since either one resets every grant.
 
-## Cloudflare Worker
+Run headless commands through `scripts/headless.sh`, not by executing the binary, so macOS applies Clicky's permissions rather than the shell's.
+
+## Cloudflare Worker (unused here)
 
 ```bash
 cd worker
@@ -143,7 +149,7 @@ IMPORTANT: Follow these naming rules strictly. Clarity is the top priority.
 - Do not add docstrings, comments, or type annotations to code you did not change
 - Do not try to fix the known non-blocking warnings (Swift 6 concurrency, deprecated onChange)
 - Do not rename the project directory or scheme (the "leanring" typo is intentional/legacy)
-- Do not run `xcodebuild` from the terminal — it invalidates TCC permissions
+- Do not sign with anything other than the identity in `scripts/build-and-run.sh` — it invalidates TCC permissions
 
 ## Git Workflow
 

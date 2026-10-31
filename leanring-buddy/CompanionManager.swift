@@ -10,7 +10,6 @@
 import AVFoundation
 import Combine
 import Foundation
-import PostHog
 import ScreenCaptureKit
 import SwiftUI
 
@@ -68,21 +67,20 @@ final class CompanionManager: ObservableObject {
     // Response text is now displayed inline on the cursor overlay via
     // streamingResponseText, so no separate response overlay manager is needed.
 
-    /// Base URL for the Cloudflare Worker proxy. All API requests route
-    /// through this so keys never ship in the app binary.
-    private static let workerBaseURL = "https://your-worker-name.your-subdomain.workers.dev"
+    /// Produces replies. See BrainConfiguration for how the backend is chosen.
+    private var brain: any Brain = BrainConfiguration.makeBrain(modelValue: BrainConfiguration.configuredModelValue)
 
-    private lazy var claudeAPI: ClaudeAPI = {
-        return ClaudeAPI(proxyURL: "\(Self.workerBaseURL)/chat", model: selectedModel)
-    }()
-
-    private lazy var elevenLabsTTSClient: ElevenLabsTTSClient = {
-        return ElevenLabsTTSClient(proxyURL: "\(Self.workerBaseURL)/tts")
-    }()
+    /// Speaks replies aloud. Assign a different CompanionTextToSpeechClient
+    /// here to change the voice backend.
+    private let textToSpeechClient: any CompanionTextToSpeechClient = SayTTSClient()
 
     /// Conversation history so Claude remembers prior exchanges within a session.
     /// Each entry is the user's transcript and Claude's response.
-    private var conversationHistory: [(userTranscript: String, assistantResponse: String)] = []
+    private var conversationHistory: [BrainConversationExchange] = []
+
+    /// Tokens, cost and latency of the most recent reply, for builds that show
+    /// them on screen. Check isCostEstimated before displaying the cost.
+    @Published private(set) var lastBrainUsage: BrainUsage?
 
     /// The currently running AI response task, if any. Cancelled when the user
     /// speaks again so a new response can begin immediately.
@@ -107,13 +105,14 @@ final class CompanionManager: ObservableObject {
     /// Used by the panel to show accurate status text ("Active" vs "Ready").
     @Published private(set) var isOverlayVisible: Bool = false
 
-    /// The Claude model used for voice responses. Persisted to UserDefaults.
-    @Published var selectedModel: String = UserDefaults.standard.string(forKey: "selectedClaudeModel") ?? "claude-sonnet-4-6"
+    /// The model used for voice responses. Starts from BrainConfiguration and
+    /// is deliberately not persisted: a saved panel choice would silently
+    /// override the BrainModel config value on the next launch.
+    @Published var selectedModel: String = BrainConfiguration.configuredModelValue
 
     func setSelectedModel(_ model: String) {
         selectedModel = model
-        UserDefaults.standard.set(model, forKey: "selectedClaudeModel")
-        claudeAPI.model = model
+        brain = BrainConfiguration.makeBrain(modelValue: model)
     }
 
     /// User preference for whether the Clicky cursor should be shown.
@@ -149,27 +148,14 @@ final class CompanionManager: ObservableObject {
     /// Whether the user has submitted their email during onboarding.
     @Published var hasSubmittedEmail: Bool = UserDefaults.standard.bool(forKey: "hasSubmittedEmail")
 
-    /// Submits the user's email to FormSpark and identifies them in PostHog.
+    /// Marks the onboarding email step as done. The address goes nowhere:
+    /// upstream posted it to the upstream author's FormSpark form.
     func submitEmail(_ email: String) {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty else { return }
 
         hasSubmittedEmail = true
         UserDefaults.standard.set(true, forKey: "hasSubmittedEmail")
-
-        // Identify user in PostHog
-        PostHogSDK.shared.identify(trimmedEmail, userProperties: [
-            "email": trimmedEmail
-        ])
-
-        // Submit to FormSpark
-        Task {
-            var request = URLRequest(url: URL(string: "https://submit-form.com/RWbGJxmIs")!)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try? JSONSerialization.data(withJSONObject: ["email": trimmedEmail])
-            _ = try? await URLSession.shared.data(for: request)
-        }
     }
 
     func start() {
@@ -179,9 +165,6 @@ final class CompanionManager: ObservableObject {
         bindVoiceStateObservation()
         bindAudioPowerLevel()
         bindShortcutTransitions()
-        // Eagerly touch the Claude API so its TLS warmup handshake completes
-        // well before the onboarding demo fires at ~40s into the video.
-        _ = claudeAPI
 
         // If the user already completed onboarding AND all permissions are
         // still granted, show the cursor overlay immediately. If permissions
@@ -285,6 +268,55 @@ final class CompanionManager: ObservableObject {
         detectedElementScreenLocation = nil
         detectedElementDisplayFrame = nil
         detectedElementBubbleText = nil
+    }
+
+    // MARK: - Scripted Checks
+
+    /// Why the most recent response failed, or nil if it succeeded.
+    @Published private(set) var lastResponseFailureMessage: String?
+
+    var isSpeakingForScriptedCheck: Bool {
+        textToSpeechClient.isPlaying
+    }
+
+    /// Runs the post-transcription pipeline and waits for it to finish, so a
+    /// headless check exercises the same code as a hotkey press.
+    func answerTranscriptForScriptedCheck(transcript: String) async {
+        sendTranscriptToClaudeWithScreenshot(transcript: transcript)
+        await currentResponseTask?.value
+    }
+
+    /// Resumed by BlueCursorView when the buddy lands, for scripted checks.
+    private var scriptedFlightArrivalContinuation: CheckedContinuation<CGPoint, Never>?
+
+    /// Called by BlueCursorView with where the triangle's tip actually landed,
+    /// in global AppKit coordinates.
+    func buddyDidArriveAtTarget(tipGlobalAppKitLocation: CGPoint) {
+        scriptedFlightArrivalContinuation?.resume(returning: tipGlobalAppKitLocation)
+        scriptedFlightArrivalContinuation = nil
+    }
+
+    /// Shows the overlay, flies the buddy to a point through the same published
+    /// state the voice pipeline uses, and returns where the tip landed. Needs
+    /// no permissions, so headless checks can run it on any machine.
+    func flyBuddyForScriptedCheck(
+        toGlobalAppKitLocation globalLocation: CGPoint,
+        displayFrame: CGRect,
+        bubbleText: String?
+    ) async -> CGPoint {
+        overlayWindowManager.hasShownOverlayBefore = true
+        overlayWindowManager.showOverlay(onScreens: NSScreen.screens, companionManager: self)
+        isOverlayVisible = true
+
+        // BlueCursorView only reacts to location changes once it has mounted.
+        try? await Task.sleep(nanoseconds: 300_000_000)
+
+        return await withCheckedContinuation { continuation in
+            scriptedFlightArrivalContinuation = continuation
+            detectedElementBubbleText = bubbleText
+            detectedElementScreenLocation = globalLocation
+            detectedElementDisplayFrame = displayFrame
+        }
     }
 
     func stop() {
@@ -493,7 +525,7 @@ final class CompanionManager: ObservableObject {
 
             // Cancel any in-progress response and TTS from a previous utterance
             currentResponseTask?.cancel()
-            elevenLabsTTSClient.stopPlayback()
+            textToSpeechClient.stopPlayback()
             clearDetectedElementLocation()
 
             // Dismiss the onboarding prompt if it's showing
@@ -541,7 +573,7 @@ final class CompanionManager: ObservableObject {
 
     // MARK: - Companion Prompt
 
-    private static let companionVoiceResponseSystemPrompt = """
+    static let companionVoiceResponseSystemPrompt = """
     you're clicky, a friendly always-on companion that lives in the user's menu bar. the user just spoke to you via push-to-talk and you can see their screen(s). your reply will be spoken aloud via text-to-speech, so write the way you'd actually talk. this is an ongoing conversation — you remember everything they've said before.
 
     rules:
@@ -578,18 +610,30 @@ final class CompanionManager: ObservableObject {
 
     // MARK: - AI Response Pipeline
 
-    /// Captures a screenshot, sends it along with the transcript to Claude,
-    /// and plays the response aloud via ElevenLabs TTS. The cursor stays in
+    /// Turns screen captures into the labeled images a Brain receives. The
+    /// label states the image's pixel dimensions so the model's coordinate
+    /// space matches the image it sees; we scale from screenshot pixels to
+    /// display points ourselves.
+    static func makeBrainImages(from screenCaptures: [CompanionScreenCapture]) -> [BrainImage] {
+        screenCaptures.map { capture in
+            let dimensionInfo = " (image dimensions: \(capture.screenshotWidthInPixels)x\(capture.screenshotHeightInPixels) pixels)"
+            return BrainImage(imageData: capture.imageData, label: capture.label + dimensionInfo)
+        }
+    }
+
+    /// Captures a screenshot, sends it along with the transcript to the Brain,
+    /// and plays the response aloud via the TTS client. The cursor stays in
     /// the spinner/processing state until TTS audio begins playing.
     /// Claude's response may include a [POINT:x,y:label] tag which triggers
     /// the buddy to fly to that element on screen.
     private func sendTranscriptToClaudeWithScreenshot(transcript: String) {
         currentResponseTask?.cancel()
-        elevenLabsTTSClient.stopPlayback()
+        textToSpeechClient.stopPlayback()
 
         currentResponseTask = Task {
             // Stay in processing (spinner) state — no streaming text displayed
             voiceState = .processing
+            lastResponseFailureMessage = nil
 
             do {
                 // Capture all connected screens so the AI has full context
@@ -597,33 +641,25 @@ final class CompanionManager: ObservableObject {
 
                 guard !Task.isCancelled else { return }
 
-                // Build image labels with the actual screenshot pixel dimensions
-                // so Claude's coordinate space matches the image it sees. We
-                // scale from screenshot pixels to display points ourselves.
-                let labeledImages = screenCaptures.map { capture in
-                    let dimensionInfo = " (image dimensions: \(capture.screenshotWidthInPixels)x\(capture.screenshotHeightInPixels) pixels)"
-                    return (data: capture.imageData, label: capture.label + dimensionInfo)
-                }
-
                 // Pass conversation history so Claude remembers prior exchanges
-                let historyForAPI = conversationHistory.map { entry in
-                    (userPlaceholder: entry.userTranscript, assistantResponse: entry.assistantResponse)
-                }
-
-                let (fullResponseText, _) = try await claudeAPI.analyzeImageStreaming(
-                    images: labeledImages,
-                    systemPrompt: Self.companionVoiceResponseSystemPrompt,
-                    conversationHistory: historyForAPI,
-                    userPrompt: transcript,
-                    onTextChunk: { _ in
+                let brainResponse = try await brain.respond(
+                    to: BrainRequest(
+                        systemPrompt: Self.companionVoiceResponseSystemPrompt,
+                        conversationHistory: conversationHistory,
+                        userPrompt: transcript,
+                        images: Self.makeBrainImages(from: screenCaptures)
+                    ),
+                    onTextDelta: { _ in
                         // No streaming text display — spinner stays until TTS plays
                     }
                 )
 
                 guard !Task.isCancelled else { return }
 
+                lastBrainUsage = brainResponse.usage
+
                 // Parse the [POINT:...] tag from Claude's response
-                let parseResult = Self.parsePointingCoordinates(from: fullResponseText)
+                let parseResult = Self.parsePointingCoordinates(from: brainResponse.text)
                 let spokenText = parseResult.spokenText
 
                 // Handle element pointing if Claude returned coordinates.
@@ -635,46 +671,22 @@ final class CompanionManager: ObservableObject {
                     voiceState = .idle
                 }
 
-                // Pick the screen capture matching Claude's screen number,
-                // falling back to the cursor screen if not specified.
-                let targetScreenCapture: CompanionScreenCapture? = {
-                    if let screenNumber = parseResult.screenNumber,
-                       screenNumber >= 1 && screenNumber <= screenCaptures.count {
-                        return screenCaptures[screenNumber - 1]
-                    }
-                    return screenCaptures.first(where: { $0.isCursorScreen })
-                }()
+                let targetScreenCapture = ScreenshotCoordinateMapper.targetCapture(
+                    forScreenNumber: parseResult.screenNumber,
+                    in: screenCaptures
+                )
 
                 if let pointCoordinate = parseResult.coordinate,
                    let targetScreenCapture {
-                    // Claude's coordinates are in the screenshot's pixel space
-                    // (top-left origin, e.g. 1280x831). Scale to the display's
-                    // point space (e.g. 1512x982), then convert to AppKit global coords.
-                    let screenshotWidth = CGFloat(targetScreenCapture.screenshotWidthInPixels)
-                    let screenshotHeight = CGFloat(targetScreenCapture.screenshotHeightInPixels)
-                    let displayWidth = CGFloat(targetScreenCapture.displayWidthInPoints)
-                    let displayHeight = CGFloat(targetScreenCapture.displayHeightInPoints)
-                    let displayFrame = targetScreenCapture.displayFrame
-
-                    // Clamp to screenshot coordinate space
-                    let clampedX = max(0, min(pointCoordinate.x, screenshotWidth))
-                    let clampedY = max(0, min(pointCoordinate.y, screenshotHeight))
-
-                    // Scale from screenshot pixels to display points
-                    let displayLocalX = clampedX * (displayWidth / screenshotWidth)
-                    let displayLocalY = clampedY * (displayHeight / screenshotHeight)
-
-                    // Convert from top-left origin (screenshot) to bottom-left origin (AppKit)
-                    let appKitY = displayHeight - displayLocalY
-
-                    // Convert display-local coords to global screen coords
-                    let globalLocation = CGPoint(
-                        x: displayLocalX + displayFrame.origin.x,
-                        y: appKitY + displayFrame.origin.y
+                    let mappedPoint = ScreenshotCoordinateMapper.mapScreenshotPoint(
+                        pointCoordinate,
+                        screenshotWidthInPixels: targetScreenCapture.screenshotWidthInPixels,
+                        screenshotHeightInPixels: targetScreenCapture.screenshotHeightInPixels,
+                        displayFrame: targetScreenCapture.displayFrame
                     )
 
-                    detectedElementScreenLocation = globalLocation
-                    detectedElementDisplayFrame = displayFrame
+                    detectedElementScreenLocation = mappedPoint.globalAppKitPoint
+                    detectedElementDisplayFrame = targetScreenCapture.displayFrame
                     ClickyAnalytics.trackElementPointed(elementLabel: parseResult.elementLabel)
                     print("🎯 Element pointing: (\(Int(pointCoordinate.x)), \(Int(pointCoordinate.y))) → \"\(parseResult.elementLabel ?? "element")\"")
                 } else {
@@ -683,7 +695,7 @@ final class CompanionManager: ObservableObject {
 
                 // Save this exchange to conversation history (with the point tag
                 // stripped so it doesn't confuse future context)
-                conversationHistory.append((
+                conversationHistory.append(BrainConversationExchange(
                     userTranscript: transcript,
                     assistantResponse: spokenText
                 ))
@@ -701,21 +713,21 @@ final class CompanionManager: ObservableObject {
                 // until the audio actually starts playing, then switch to responding.
                 if !spokenText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     do {
-                        try await elevenLabsTTSClient.speakText(spokenText)
-                        // speakText returns after player.play() — audio is now playing
+                        try await textToSpeechClient.speakText(spokenText)
+                        // speakText returns once audio has started
                         voiceState = .responding
                     } catch {
                         ClickyAnalytics.trackTTSError(error: error.localizedDescription)
-                        print("⚠️ ElevenLabs TTS error: \(error)")
-                        speakCreditsErrorFallback()
+                        print("⚠️ TTS error: \(error)")
                     }
                 }
             } catch is CancellationError {
                 // User spoke again — response was interrupted
             } catch {
                 ClickyAnalytics.trackResponseError(error: error.localizedDescription)
-                print("⚠️ Companion response error: \(error)")
-                speakCreditsErrorFallback()
+                print("⚠️ Companion response error: \(error.localizedDescription)")
+                lastResponseFailureMessage = error.localizedDescription
+                await speakResponseFailure(error)
             }
 
             if !Task.isCancelled {
@@ -735,7 +747,7 @@ final class CompanionManager: ObservableObject {
         transientHideTask?.cancel()
         transientHideTask = Task {
             // Wait for TTS audio to finish playing
-            while elevenLabsTTSClient.isPlaying {
+            while textToSpeechClient.isPlaying {
                 try? await Task.sleep(nanoseconds: 200_000_000)
                 guard !Task.isCancelled else { return }
             }
@@ -755,14 +767,22 @@ final class CompanionManager: ObservableObject {
         }
     }
 
-    /// Speaks a hardcoded error message using macOS system TTS when API
-    /// credits run out. Uses NSSpeechSynthesizer so it works even when
-    /// ElevenLabs is down.
-    private func speakCreditsErrorFallback() {
-        let utterance = "I'm all out of credits. Please DM Farza and tell him to bring me back to life."
-        let synthesizer = NSSpeechSynthesizer()
-        synthesizer.startSpeaking(utterance)
-        voiceState = .responding
+    /// Tells the user out loud why nothing happened. There's no other visible
+    /// signal once the spinner stops, and the full error is in the console.
+    private func speakResponseFailure(_ error: Error) async {
+        let utterance: String
+        if error is CompanionScreenCaptureError {
+            utterance = "I can't see your screen yet. Give Clicky screen recording permission in System Settings, then relaunch me."
+        } else {
+            utterance = "I couldn't get an answer from my brain. Check the Clicky console for the error."
+        }
+
+        do {
+            try await textToSpeechClient.speakText(utterance)
+            voiceState = .responding
+        } catch {
+            print("⚠️ TTS error: \(error)")
+        }
     }
 
     // MARK: - Point Tag Parsing
@@ -779,21 +799,31 @@ final class CompanionManager: ObservableObject {
         let screenNumber: Int?
     }
 
-    /// Parses a [POINT:x,y:label:screenN] or [POINT:none] tag from the end of Claude's response.
-    /// Returns the spoken text (tag removed) and the optional coordinate + label + screen number.
+    /// Parses a [POINT:x,y:label:screenN] or [POINT:none] tag from Claude's response.
+    /// Models sometimes add a trailing period or write a decimal coordinate, and a tag
+    /// that fails to match would be read aloud, so the match is deliberately loose. When
+    /// there are several tags the last one wins, and all of them leave the spoken text.
+    /// Returns the spoken text (tags removed) and the optional coordinate + label + screen number.
     static func parsePointingCoordinates(from responseText: String) -> PointingParseResult {
         // Match [POINT:none] or [POINT:123,456:label] or [POINT:123,456:label:screen2]
-        let pattern = #"\[POINT:(?:none|(\d+)\s*,\s*(\d+)(?::([^\]:\s][^\]:]*?))?(?::screen(\d+))?)\]\s*$"#
+        let pattern = #"\[POINT:\s*(?:none|(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)(?::([^\]]*?))?(?::\s*screen\s*(\d+))?)\s*\]"#
 
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-              let match = regex.firstMatch(in: responseText, range: NSRange(responseText.startIndex..., in: responseText)) else {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return PointingParseResult(spokenText: responseText, coordinate: nil, elementLabel: nil, screenNumber: nil)
+        }
+
+        let fullTextRange = NSRange(responseText.startIndex..., in: responseText)
+        let allMatches = regex.matches(in: responseText, range: fullTextRange)
+
+        guard let match = allMatches.last else {
             // No tag found at all
             return PointingParseResult(spokenText: responseText, coordinate: nil, elementLabel: nil, screenNumber: nil)
         }
 
-        // Remove the tag from the spoken text
-        let tagRange = Range(match.range, in: responseText)!
-        let spokenText = String(responseText[..<tagRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        // Remove the tags from the spoken text
+        let spokenText = regex
+            .stringByReplacingMatches(in: responseText, range: fullTextRange, withTemplate: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Check if it's [POINT:none]
         guard match.numberOfRanges >= 3,
@@ -812,6 +842,14 @@ final class CompanionManager: ObservableObject {
         var screenNumber: Int? = nil
         if match.numberOfRanges >= 5, let screenRange = Range(match.range(at: 4), in: responseText) {
             screenNumber = Int(responseText[screenRange])
+        }
+
+        // [POINT:1,2:screen2] has no label, so the regex reads "screen2" as one.
+        if let possibleScreenLabel = elementLabel?.lowercased(),
+           possibleScreenLabel.hasPrefix("screen"),
+           let screenNumberFromLabel = Int(possibleScreenLabel.dropFirst("screen".count)) {
+            screenNumber = screenNumberFromLabel
+            elementLabel = nil
         }
 
         return PointingParseResult(
@@ -974,49 +1012,42 @@ final class CompanionManager: ObservableObject {
 
                 // Only send the cursor screen so Claude can't pick something
                 // on a different monitor that we can't point at.
-                guard let cursorScreenCapture = screenCaptures.first(where: { $0.isCursorScreen }) else {
+                guard let cursorScreenCapture = ScreenshotCoordinateMapper.targetCapture(forScreenNumber: nil, in: screenCaptures) else {
                     print("🎯 Onboarding demo: no cursor screen found")
                     return
                 }
 
-                let dimensionInfo = " (image dimensions: \(cursorScreenCapture.screenshotWidthInPixels)x\(cursorScreenCapture.screenshotHeightInPixels) pixels)"
-                let labeledImages = [(data: cursorScreenCapture.imageData, label: cursorScreenCapture.label + dimensionInfo)]
-
-                let (fullResponseText, _) = try await claudeAPI.analyzeImageStreaming(
-                    images: labeledImages,
-                    systemPrompt: Self.onboardingDemoSystemPrompt,
-                    userPrompt: "look around my screen and find something interesting to point at",
-                    onTextChunk: { _ in }
+                let brainResponse = try await brain.respond(
+                    to: BrainRequest(
+                        systemPrompt: Self.onboardingDemoSystemPrompt,
+                        conversationHistory: [],
+                        userPrompt: "look around my screen and find something interesting to point at",
+                        images: Self.makeBrainImages(from: [cursorScreenCapture])
+                    ),
+                    onTextDelta: { _ in }
                 )
 
-                let parseResult = Self.parsePointingCoordinates(from: fullResponseText)
+                lastBrainUsage = brainResponse.usage
+
+                let parseResult = Self.parsePointingCoordinates(from: brainResponse.text)
 
                 guard let pointCoordinate = parseResult.coordinate else {
                     print("🎯 Onboarding demo: no element to point at")
                     return
                 }
 
-                let screenshotWidth = CGFloat(cursorScreenCapture.screenshotWidthInPixels)
-                let screenshotHeight = CGFloat(cursorScreenCapture.screenshotHeightInPixels)
-                let displayWidth = CGFloat(cursorScreenCapture.displayWidthInPoints)
-                let displayHeight = CGFloat(cursorScreenCapture.displayHeightInPoints)
-                let displayFrame = cursorScreenCapture.displayFrame
-
-                let clampedX = max(0, min(pointCoordinate.x, screenshotWidth))
-                let clampedY = max(0, min(pointCoordinate.y, screenshotHeight))
-                let displayLocalX = clampedX * (displayWidth / screenshotWidth)
-                let displayLocalY = clampedY * (displayHeight / screenshotHeight)
-                let appKitY = displayHeight - displayLocalY
-                let globalLocation = CGPoint(
-                    x: displayLocalX + displayFrame.origin.x,
-                    y: appKitY + displayFrame.origin.y
+                let mappedPoint = ScreenshotCoordinateMapper.mapScreenshotPoint(
+                    pointCoordinate,
+                    screenshotWidthInPixels: cursorScreenCapture.screenshotWidthInPixels,
+                    screenshotHeightInPixels: cursorScreenCapture.screenshotHeightInPixels,
+                    displayFrame: cursorScreenCapture.displayFrame
                 )
 
                 // Set custom bubble text so the pointing animation uses Claude's
                 // comment instead of a random phrase
                 detectedElementBubbleText = parseResult.spokenText
-                detectedElementScreenLocation = globalLocation
-                detectedElementDisplayFrame = displayFrame
+                detectedElementScreenLocation = mappedPoint.globalAppKitPoint
+                detectedElementDisplayFrame = cursorScreenCapture.displayFrame
                 print("🎯 Onboarding demo: pointing at \"\(parseResult.elementLabel ?? "element")\" — \"\(parseResult.spokenText)\"")
             } catch {
                 print("⚠️ Onboarding demo error: \(error)")
