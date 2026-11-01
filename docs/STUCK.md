@@ -187,6 +187,7 @@ Demo honesty: traces are outside the app target, and `prove-privacy.sh` checks t
 
 ## Known limits
 
+- Stuck itself can only take a screenshot on a yes, but Clicky as a whole has two other routes: the ctrl+option hotkey, and upstream's onboarding demo, which takes one 40 seconds into "Watch Onboarding Again". Onboarding is off by default and only runs if you click that link. The panel's wording doesn't mention it.
 - The detector has only ever been tuned on synthetic traces, so expect real numbers to differ.
 - The tile grid means two controls within 160pt count as one spot.
 - A real capture includes everything on that display, which is why the yes step says what it's about to do.
