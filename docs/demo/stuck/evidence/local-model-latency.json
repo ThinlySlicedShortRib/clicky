@@ -1,0 +1,33 @@
+{
+ "note": "Stuck help prompt on the Blender demo frame through the app. Cold means unloaded first (keep_alive 0) but files already in the OS cache. New image means a different image every run. Identical-request timing is ollama serving a cached prompt and is NOT representative.",
+ "results": [
+  {
+   "model": "qwen3.6:35b-a3b",
+   "coldFirstText": 11.07,
+   "coldTotal": 12.03,
+   "newImageRuns": 10,
+   "newImageFirstTextMedian": 2.15,
+   "newImageFirstTextMin": 2.14,
+   "newImageFirstTextMax": 2.34,
+   "newImageTotalMedian": 3.05,
+   "newImageTotalMax": 3.18,
+   "pointsOnTarget": 1,
+   "saidEditMode": 10,
+   "identicalRequestFirstTextMedianDiscarded": 0.06
+  },
+  {
+   "model": "qwen3.6:27b-q8_0",
+   "coldFirstText": 14.73,
+   "coldTotal": 21.51,
+   "newImageRuns": 10,
+   "newImageFirstTextMedian": 7.84,
+   "newImageFirstTextMin": 7.68,
+   "newImageFirstTextMax": 8.12,
+   "newImageTotalMedian": 14.13,
+   "newImageTotalMax": 15.01,
+   "pointsOnTarget": 0,
+   "saidEditMode": 10,
+   "identicalRequestFirstTextMedianDiscarded": 0.24
+  }
+ ]
+}

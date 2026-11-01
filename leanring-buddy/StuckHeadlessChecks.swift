@@ -89,6 +89,84 @@ extension HeadlessCommandRunner {
         HeadlessOutput.finish(result, exitCode: 0)
     }
 
+    // MARK: Shadow Run
+
+    /// Runs the real tap and detector on whatever is really happening on this
+    /// Mac, with no UI, so nothing can interrupt anyone. Unlike every other
+    /// check here this isn't scripted: the point is to see how often a real
+    /// offer would have fired. It keeps totals only and writes nothing until
+    /// it prints them at the end. The input is unlabelled, so a would-be offer
+    /// is a count to look at, not a measured false positive.
+    func runStuckShadow(seconds: Double) async {
+        let scoringModel = StuckScoringModel()
+        var detector = StuckDetector(scoringModel: scoringModel)
+        var offerPolicy = StuckOfferPolicy(scoringModel: scoringModel)
+        var offersThatWouldHaveFired = 0
+        var peakScore: Double = 0
+        var readingsPerSignal: [String: Int] = [:]
+        var eventCountsByCategory: [String: Int] = [:]
+
+        let tapMonitor = StuckEventTapMonitor()
+        tapMonitor.onBehaviourEvent = { behaviourEventKind, timestampInSeconds in
+            MainActor.assumeIsolated {
+                detector.ingest(StuckBehaviourEvent(timestampInSeconds: timestampInSeconds, kind: behaviourEventKind))
+                eventCountsByCategory[Self.categoryName(of: behaviourEventKind), default: 0] += 1
+            }
+        }
+
+        guard tapMonitor.start() else {
+            HeadlessOutput.finish(["status": "permission_missing", "error": "macOS refused the tap"], exitCode: 3)
+        }
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        let isReceivingKeyboardEvents = tapMonitor.isReceivingKeyboardEvents
+
+        let startDate = Date()
+        while Date().timeIntervalSince(startDate) < seconds {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            let currentTime = ProcessInfo.processInfo.systemUptime
+            detector.wipeExpiredMemory(atTime: currentTime)
+            let assessment = detector.assess(atTime: currentTime)
+            peakScore = max(peakScore, assessment.score)
+            for signalReading in assessment.signals {
+                readingsPerSignal[signalReading.kind.rawValue, default: 0] += 1
+            }
+            if offerPolicy.shouldOffer(for: assessment, atTime: currentTime, isCompanionBusy: false) {
+                offersThatWouldHaveFired += 1
+            }
+        }
+
+        tapMonitor.stop()
+
+        HeadlessOutput.finish([
+            "status": isReceivingKeyboardEvents ? "ok" : "permission_missing",
+            "scripted": false,
+            "inputIsUnlabelled": true,
+            "seconds": seconds,
+            "isReceivingKeyboardEvents": isReceivingKeyboardEvents,
+            "eventCountsByCategory": eventCountsByCategory,
+            "peakScore": peakScore,
+            "secondsEachSignalWasActive": readingsPerSignal,
+            "offersThatWouldHaveFired": offersThatWouldHaveFired
+        ], exitCode: isReceivingKeyboardEvents ? 0 : 3)
+    }
+
+    /// Categories only. Coarse areas and distances are deliberately left out.
+    private static func categoryName(of behaviourEventKind: StuckBehaviourEventKind) -> String {
+        switch behaviourEventKind {
+        case .undo: return "undo"
+        case .redo: return "redo"
+        case .cancel: return "cancel"
+        case .modeToggle: return "modeToggle"
+        case .anonymousKeyPress: return "anonymousKeyPress"
+        case .click: return "click"
+        case .dragFinished: return "drag"
+        case .scrollTick: return "scroll"
+        case .pointerMovement: return "pointerMovement"
+        case .leftForBrowser, .returnedFromBrowser: return "browserSwitch"
+        }
+    }
+
     // MARK: Tap Check
 
     /// Installs the real tap, then reads it back from the system list. That
@@ -119,7 +197,7 @@ extension HeadlessCommandRunner {
             "tapsLeftAfterStopping": tapsAfterStopping.count,
             "hint": isReceivingKeyboardEvents
                 ? "keyboard and mouse events are both reaching the tap"
-                : "the tap can see the mouse but macOS is withholding key presses, so undos go unseen. Grant Clicky Input Monitoring in System Settings > Privacy & Security, then quit and relaunch it."
+                : "macOS is withholding key presses from the tap, so undos go unseen. Grant Clicky Input Monitoring in System Settings > Privacy & Security, then quit and relaunch it."
         ], exitCode: isReceivingKeyboardEvents ? 0 : 3)
     }
 
@@ -178,6 +256,13 @@ extension HeadlessCommandRunner {
         guard let offerPanel = stuckCompanion.offerPanelForScriptedChecks else {
             frameRecorder?.stop()
             HeadlessOutput.finish(["status": "failed", "error": "no offer panel exists"], exitCode: 1)
+        }
+
+        if let framesDirectoryPath = options.framesDirectoryPath, let pillView = offerPanel.contentView,
+           let pillBitmap = pillView.bitmapImageRepForCachingDisplay(in: pillView.bounds) {
+            pillView.cacheDisplay(in: pillView.bounds, to: pillBitmap)
+            try? pillBitmap.representation(using: .png, properties: [:])?
+                .write(to: URL(fileURLWithPath: framesDirectoryPath).appendingPathComponent("offer-pill-2x.png"))
         }
 
         let frontmostApplicationDuringOffer = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
@@ -317,10 +402,42 @@ extension HeadlessCommandRunner {
 
         let receiptView = StuckReceiptView(stuckCompanion: stuckCompanion, onClose: {})
             .frame(width: 318)
-        let hostingView = NSHostingView(rootView: receiptView)
+        let pixelSize = await renderToPNG(receiptView, outputPath: outputPath)
+
+        // Wipes the switch back to how a user would have left it.
+        stuckCompanion.setEnabled(false)
+
+        HeadlessOutput.finish([
+            "status": "ok",
+            "scripted": true,
+            "outputPath": outputPath,
+            "pixelSize": ["width": pixelSize.width, "height": pixelSize.height]
+        ], exitCode: 0)
+    }
+
+    // MARK: Consent Render
+
+    /// Draws the real menu bar panel with Stuck off, which is where the
+    /// one-sentence consent lives.
+    func runStuckConsentRender(outputPath: String) async {
+        let panelView = CompanionPanelView(companionManager: companionManager)
+            .frame(width: 320)
+        let pixelSize = await renderToPNG(panelView, outputPath: outputPath)
+
+        HeadlessOutput.finish([
+            "status": "ok",
+            "scripted": true,
+            "outputPath": outputPath,
+            "pixelSize": ["width": pixelSize.width, "height": pixelSize.height]
+        ], exitCode: 0)
+    }
+
+    /// Asks a view to draw itself to a PNG, hosted off screen because a
+    /// windowless view can't lay out. Exits the app if it can't.
+    private func renderToPNG<Content: View>(_ view: Content, outputPath: String) async -> (width: Int, height: Int) {
+        let hostingView = NSHostingView(rootView: view)
         hostingView.frame = NSRect(origin: .zero, size: hostingView.fittingSize)
 
-        // Windowless views can't lay out, so it's hosted off screen.
         let offscreenWindow = NSWindow(
             contentRect: NSRect(x: -5_000, y: -5_000, width: hostingView.frame.width, height: hostingView.frame.height),
             styleMask: .borderless,
@@ -345,15 +462,7 @@ extension HeadlessCommandRunner {
             HeadlessOutput.finish(["status": "failed", "error": "could not write \(outputPath)"], exitCode: 1)
         }
 
-        // Wipes the switch back to how a user would have left it.
-        stuckCompanion.setEnabled(false)
-
-        HeadlessOutput.finish([
-            "status": "ok",
-            "scripted": true,
-            "outputPath": outputPath,
-            "pixelSize": ["width": bitmap.pixelsWide, "height": bitmap.pixelsHigh]
-        ], exitCode: 0)
+        return (bitmap.pixelsWide, bitmap.pixelsHigh)
     }
 }
 
@@ -470,6 +579,8 @@ final class StuckFrameRecorder {
             draw(offerView, windowFrame: offerPanel.frame, onto: canvas)
         }
 
+        drawRealPointer(onto: canvas)
+
         guard let frameImage = canvas.makeImage(),
               let jpegData = NSBitmapImageRep(cgImage: frameImage)
                 .representation(using: .jpeg, properties: [.compressionFactor: 0.86]) else {
@@ -488,6 +599,32 @@ final class StuckFrameRecorder {
         }
         lastFrameDate = currentDate
         pendingFrameFileName = frameFileName
+    }
+
+    /// The system cursor isn't in any of these views, so it's drawn at the
+    /// real pointer location to keep the buddy's position readable.
+    private func drawRealPointer(onto canvas: CGContext) {
+        let pointerLocation = NSEvent.mouseLocation
+        let arrowPoints = [(0.0, 0.0), (0.0, -16.0), (4.0, -12.5), (6.8, -18.5), (9.2, -17.4), (6.4, -11.5), (11.5, -11.5)]
+
+        let arrowPath = CGMutablePath()
+        for (pointIndex, arrowPoint) in arrowPoints.enumerated() {
+            let location = CGPoint(x: pointerLocation.x + arrowPoint.0, y: pointerLocation.y + arrowPoint.1)
+            if pointIndex == 0 {
+                arrowPath.move(to: location)
+            } else {
+                arrowPath.addLine(to: location)
+            }
+        }
+        arrowPath.closeSubpath()
+
+        canvas.addPath(arrowPath)
+        canvas.setFillColor(CGColor(gray: 0, alpha: 1))
+        canvas.fillPath()
+        canvas.addPath(arrowPath)
+        canvas.setStrokeColor(CGColor(gray: 1, alpha: 1))
+        canvas.setLineWidth(1.2)
+        canvas.strokePath()
     }
 
     private func draw(_ view: NSView, windowFrame: CGRect, onto canvas: CGContext) {

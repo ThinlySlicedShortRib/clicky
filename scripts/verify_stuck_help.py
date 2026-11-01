@@ -6,11 +6,13 @@ receipt line list, through the app's headless path. Ground truth doesn't come
 from the model: Vision OCR finds the "Object Mode" dropdown in Blender's own
 screenshot. A reply passes only if the point lands on that dropdown.
 
-Uses a real capture if Clicky has Screen Recording, and otherwise Blender's
-export of its own window, and records which in `captureSource`.
+By default the image is Blender's export of its own window, so a cloud model
+never sees anything but Blender. --real-capture uses ScreenCaptureKit, which
+photographs whatever is on the display, so it refuses to run with a model that
+isn't local unless you add --allow-cloud-capture.
 
     scripts/verify_stuck_help.py --runs 10
-    scripts/verify_stuck_help.py --model ollama:qwen3.6:35b-a3b --runs 5
+    scripts/verify_stuck_help.py --model ollama:qwen3.6:35b-a3b --real-capture --runs 3
     scripts/verify_stuck_help.py --keep-frame /abs/out.png --runs 0
 """
 
@@ -51,9 +53,16 @@ def main():
     parser.add_argument("--runs", type=int, default=10)
     parser.add_argument("--window", default="0,70,1512,860", help="Blender window as x,y,width,height")
     parser.add_argument("--keep-frame", help="save Blender's exported window here")
+    parser.add_argument("--real-capture", action="store_true", help="use ScreenCaptureKit instead of Blender's export")
+    parser.add_argument("--allow-cloud-capture", action="store_true", help="let --real-capture send the display to a cloud model")
+    parser.add_argument("--save-sent-image", help="save the exact image sent to the model")
     parser.add_argument("--json", help="write every result here")
     parser.add_argument("--rect-file", help="write the content rectangle here")
     arguments = parser.parse_args()
+
+    is_local_model = (arguments.model or "").startswith("ollama:")
+    if arguments.real_capture and not is_local_model and not arguments.allow_cloud_capture:
+        parser.error("--real-capture sends your whole display to the model. Use an ollama: model, or add --allow-cloud-capture.")
 
     output_directory = tempfile.mkdtemp(prefix="clicky-stuck-help-")
     blender_process = subprocess.Popen(
@@ -92,6 +101,10 @@ def main():
             "--image", frame_path, "--image-rect", image_rect,
             "--verify-text", TARGET_TEXT,
         ]
+        if not arguments.real_capture:
+            headless_arguments.append("--image-only")
+        if arguments.save_sent_image:
+            headless_arguments += ["--save-sent-image", arguments.save_sent_image]
         if arguments.model:
             headless_arguments += ["--model", arguments.model]
 

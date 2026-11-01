@@ -1,0 +1,602 @@
+[
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "object mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, which can only move the whole cube, so you can't pull a single corner out. Press tab with your mouse over the viewport to switch to edit mode, or pick it from this mode dropdown, then click one corner and drag it out with g. [POINT:88,88:object mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, which can only move the whole cube, so you can't pull a single corner out. Press tab with your mouse over the viewport to switch to edit mode, or pick it from this mode dropdown, then click one corner and drag it out with g.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 2145,
+   "cacheReadInputTokens": 1403,
+   "costInUSD": 0.012055,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 318,
+   "timeToFirstTextInSeconds": 3.537203073501587,
+   "totalDurationInSeconds": 5.180937051773071
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, which moves the whole cube, so undo keeps undoing your attempts. switch to edit mode by hovering over the cube and pressing tab, or use this dropdown, then you can grab a single corner and pull it out like the goal. [POINT:88,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, which moves the whole cube, so undo keeps undoing your attempts. switch to edit mode by hovering over the cube and pressing tab, or use this dropdown, then you can grab a single corner and pull it out like the goal.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.0033095,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 280,
+   "timeToFirstTextInSeconds": 2.9488930702209473,
+   "totalDurationInSeconds": 4.502969026565552
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "object mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 102.77,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 102.77,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 87,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're still in object mode, which moves the whole cube instead of reshaping it, so the corner can't be pulled out. hover over the viewport and press tab to switch into edit mode, or use this mode dropdown, then you can pick a single corner and drag it out.\n\n[POINT:87,88:object mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're still in object mode, which moves the whole cube instead of reshaping it, so the corner can't be pulled out. hover over the viewport and press tab to switch into edit mode, or use this mode dropdown, then you can pick a single corner and drag it out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 4.94,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.0041595,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 365,
+   "timeToFirstTextInSeconds": 3.734637975692749,
+   "totalDurationInSeconds": 5.178830981254578
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, which only moves the whole cube, so the corner never comes loose by itself. switch to edit mode with that mode dropdown, or hover over the cube and press tab, then click a single corner and drag it out with the grab tool. [POINT:88,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, which only moves the whole cube, so the corner never comes loose by itself. switch to edit mode with that mode dropdown, or hover over the cube and press tab, then click a single corner and drag it out with the grab tool.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.0037705000000000004,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 310,
+   "timeToFirstTextInSeconds": 3.1272109746932983,
+   "totalDurationInSeconds": 4.687456011772156
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, so anything you grab moves the whole cube instead of one corner. switch to edit mode by hovering over the cube and pressing tab, or use this mode dropdown, then you can click a single corner and drag it out. [POINT:88,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, so anything you grab moves the whole cube instead of one corner. switch to edit mode by hovering over the cube and pressing tab, or use this mode dropdown, then you can click a single corner and drag it out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.0041295,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 362,
+   "timeToFirstTextInSeconds": 3.9775240421295166,
+   "totalDurationInSeconds": 5.431802988052368
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "object mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, so anything you drag moves the whole cube instead of one corner. switch into edit mode by hovering over the viewport and pressing tab, or use this mode dropdown, then you can pick a single corner vertex and pull it out. [POINT:88,88:object mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, so anything you drag moves the whole cube instead of one corner. switch into edit mode by hovering over the viewport and pressing tab, or use this mode dropdown, then you can pick a single corner vertex and pull it out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.003449500000000002,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 294,
+   "timeToFirstTextInSeconds": 2.7738020420074463,
+   "totalDurationInSeconds": 4.206526041030884
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 103.95,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 103.95,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 88,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're still in object mode, which moves the whole cube, so grabbing a single corner isn't working. hover over the viewport and press tab to switch into edit mode, or use the mode dropdown up top left. from there you can pick one corner vertex and drag it out toward the goal shape. [POINT:88,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're still in object mode, which moves the whole cube, so grabbing a single corner isn't working. hover over the viewport and press tab to switch into edit mode, or use the mode dropdown up top left. from there you can pick one corner vertex and drag it out toward the goal shape.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 3.77,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.003949500000000002,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 344,
+   "timeToFirstTextInSeconds": 3.665347933769226,
+   "totalDurationInSeconds": 5.573109984397888
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 106.31,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 106.31,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 90,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, so anything you pull moves the whole cube instead of just one corner. switch to edit mode by hitting tab with your mouse over the viewport, or use this mode dropdown, then you can pick a single corner vertex and drag it out.\n\n[POINT:90,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, so anything you pull moves the whole cube instead of just one corner. switch to edit mode by hitting tab with your mouse over the viewport, or use this mode dropdown, then you can pick a single corner vertex and drag it out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 1.46,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.003749500000000002,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 324,
+   "timeToFirstTextInSeconds": 3.3092089891433716,
+   "totalDurationInSeconds": 4.978981971740723
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "object mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 102.77,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 102.77,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 87,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, so you can only move the whole cube, and the goal needs one corner pulled out, which means editing its vertices. Hover over the viewport and press tab, or use this mode dropdown, to switch to edit mode. Then pick a single corner and press g to drag it out. [POINT:87,88:object mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, so you can only move the whole cube, and the goal needs one corner pulled out, which means editing its vertices. Hover over the viewport and press tab, or use this mode dropdown, to switch to edit mode. Then pick a single corner and press g to drag it out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 4.94,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.004075500000000001,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 344,
+   "timeToFirstTextInSeconds": 4.04646098613739,
+   "totalDurationInSeconds": 5.6409289836883545
+  }
+ },
+ {
+  "brain": "claude CLI (claude-sonnet-5-5)",
+  "captureFallbackReason": "Screen Recording permission is missing for Clicky. Grant it in System Settings > Privacy & Security > Screen & System Audio Recording (add /private/tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app if it isn't listed), then quit and relaunch Clicky.",
+  "capturePathNote": "fixture image: ScreenCaptureKit was not exercised by this run",
+  "captureSource": "fixture",
+  "displayFrameAppKit": {
+   "height": 982,
+   "width": 1512,
+   "x": 0,
+   "y": 0
+  },
+  "elementLabel": "mode dropdown",
+  "model": "claude-sonnet-5-5",
+  "pointGlobalAppKit": {
+   "x": 102.77,
+   "y": 878.01
+  },
+  "pointInDisplayPoints": {
+   "x": 102.77,
+   "y": 103.99
+  },
+  "pointInScreenshotPixels": {
+   "x": 87,
+   "y": 88
+  },
+  "prompt": "where is the most important thing on my screen? point at it.",
+  "rawResponse": "you're in object mode, so everything you grab moves the whole cube instead of one corner. Switch to edit mode by pressing tab with your mouse over the viewport, or use this dropdown, and then you can pick a single corner to pull out.\n\n[POINT:87,88:mode dropdown]",
+  "screenNumber": null,
+  "screenshotSizeInPixels": {
+   "height": 831,
+   "width": 1280
+  },
+  "spokenText": "you're in object mode, so everything you grab moves the whole cube instead of one corner. Switch to edit mode by pressing tab with your mouse over the viewport, or use this dropdown, and then you can pick a single corner to pull out.",
+  "status": "ok",
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 4.94,
+   "hit": true,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 14.722013473510781,
+    "width": 70.60154724121094,
+    "x": 72.38527407316184,
+    "y": 97.12878912354867
+   },
+   "text": "Object Mode"
+  },
+  "usage": {
+   "backendName": "claude CLI",
+   "cacheCreationInputTokens": 0,
+   "cacheReadInputTokens": 3548,
+   "costInUSD": 0.0042895000000000025,
+   "costSourceDescription": "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+   "inputTokens": 2,
+   "isCostEstimated": true,
+   "modelIdentifier": "claude-sonnet-5-5",
+   "outputTokens": 378,
+   "timeToFirstTextInSeconds": 3.902590036392212,
+   "totalDurationInSeconds": 5.284292936325073
+  }
+ }
+]

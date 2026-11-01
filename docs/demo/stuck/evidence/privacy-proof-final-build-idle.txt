@@ -1,0 +1,47 @@
+== clicky privacy proof ==
+date:     Sun Nov  1 13:36:41 CST 2026
+app:      /tmp/clicky-dd-stuck/Build/Products/Debug/Clicky.app
+pid:      94408
+
+measuring the real app, Stuck on for 60s
+measuring the same detector source, synthetic replay for 60s
+
+-- negative control: a child that really writes and connects --
+sockets seen:         1
+writable files seen:  1
+logical writes:       2031616
+disk bytes written:   2002944
+instruments can see writes and sockets
+
+-- the real app, Stuck on, 60s, 55 lsof samples --
+network sockets, peak (lsof -i):        0
+bytes in + out (nettop):                0
+files newly opened for writing (lsof):  0
+logical writes (kernel rusage):         0
+disk bytes written (kernel rusage):     0
+app files changed under ~/Library:      0
+fs_usage:                               skipped, needs root: run `sudo scripts/prove-privacy.sh` to add it
+
+-- was detection really running? --
+tap reported by macOS:     1 tap, listen-only: True, enabled: True
+keyboard events reach it:  True
+events handled meanwhile:  0
+screenshots taken:         0
+NO EVENTS were handled. The app was idle, so this says nothing about detection.
+Run it again and move the mouse and press keys while it measures.
+
+-- the same detector source, synthetic replay, 60s, 55 lsof samples --
+network sockets, peak (lsof -i):        0
+bytes in + out (nettop):                0
+files newly opened for writing (lsof):  0
+logical writes (kernel rusage):         0
+disk bytes written (kernel rusage):     0
+app files changed under ~/Library:      0
+fs_usage:                               skipped, needs root: run `sudo scripts/prove-privacy.sh` to add it
+replay did this work:      {"eventsProcessed": 218, "offersThatWouldHaveFired": 35, "retainedItemsAtEnd": 62}
+
+-- can test data or capture reach detection? --
+synthetic traces in the app binary:  0
+capture, network, file or log calls in the detection sources:  0
+
+PASS ON IDLE ONLY  nothing was written or opened, but no real events were handled.

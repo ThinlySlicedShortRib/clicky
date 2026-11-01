@@ -1,0 +1,30 @@
+{
+  "answer" : "none",
+  "clickyActivatedDuringRun" : false,
+  "focusSafety" : {
+    "clickyIsActiveApplication" : false,
+    "frontmostApplicationDuringOffer" : "com.t3tools.t3code",
+    "frontmostApplicationUnchanged" : true,
+    "panelCanBecomeKey" : false,
+    "panelCanBecomeMain" : false,
+    "panelFrameAppKit" : {
+      "height" : 62,
+      "width" : 288,
+      "x" : 545,
+      "y" : 196
+    },
+    "panelIsKeyWindow" : false,
+    "panelIsNonActivating" : true,
+    "panelReceivesClicks" : true
+  },
+  "frameCount" : 0,
+  "frontmostApplicationBefore" : "com.t3tools.t3code",
+  "retainedItemsAfterAnswer" : 4,
+  "screenshotsTaken" : 0,
+  "scripted" : true,
+  "secondsFromOfferToPillAppearing" : 1.5530239343643188,
+  "secondsUntilOfferFinished" : 6.6176639795303345,
+  "status" : "ok",
+  "thresholdMultiplierAfter" : 1.1200000000000001,
+  "thresholdMultiplierBefore" : 1
+}

@@ -789,11 +789,15 @@ final class CompanionManager: ObservableObject {
     /// Takes the single screenshot. The flash starts first and overlaps the
     /// capture, so the user sees it happen rather than being told afterwards.
     private func captureForStuckHelp(_ stuckHelpRequest: StuckHelpRequest) async throws -> [CompanionScreenCapture] {
-        stuckHelpRequest.onCaptureStarting()
+        // The flash announces a screenshot and where it's going, so it can't
+        // play when capture has no chance of working.
+        if stuckCaptureOverrideForScriptedCheck != nil || CGPreflightScreenCaptureAccess() {
+            stuckHelpRequest.onCaptureStarting()
 
-        // Lets the flash reach the screen. Own windows are excluded from the
-        // capture, so it won't appear in the image.
-        try await Task.sleep(nanoseconds: 120_000_000)
+            // Lets the flash reach the screen. Own windows are excluded from
+            // the capture, so it won't appear in the image.
+            try await Task.sleep(nanoseconds: 120_000_000)
+        }
 
         let screenCaptures: [CompanionScreenCapture]
         if let stuckCaptureOverrideForScriptedCheck {

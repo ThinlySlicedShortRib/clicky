@@ -1,0 +1,98 @@
+[
+ {
+  "status": "verification_failed",
+  "captureSource": "screencapturekit",
+  "pointInDisplayPoints": {
+   "x": 623.7,
+   "y": 558.95
+  },
+  "elementLabel": "vertex",
+  "spokenText": "you're trying to pull out a corner of your cube to match the goal shape, but it looks like you might be selecting the whole object instead of just one vertex. switch to vertex select mode by pressing '1' on your keyboard, then click on that top-right corner vertex and drag it outward.",
+  "usage": {
+   "backendName": "ollama",
+   "costSourceDescription": "local model, no per-call price",
+   "inputTokens": 2266,
+   "isCostEstimated": false,
+   "modelIdentifier": "qwen3.6:35b-a3b",
+   "outputTokens": 75,
+   "timeToFirstTextInSeconds": 10.182522058486938,
+   "totalDurationInSeconds": 11.368811964988708
+  },
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 688.27,
+   "hit": false,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 11.802884615384682,
+    "width": 70.87499549388885,
+    "x": 70.87500438348094,
+    "y": 99.14423076923075
+   },
+   "text": "Object Mode"
+  }
+ },
+ {
+  "status": "verification_failed",
+  "captureSource": "screencapturekit",
+  "pointInDisplayPoints": {
+   "x": 53.16,
+   "y": 982
+  },
+  "elementLabel": "edit mode",
+  "spokenText": "you're trying to reshape the cube on the right to match the \"goal\" shape, but you've been undoing a lot because you're probably selecting vertices and moving them without being in edit mode or using the right tool. click the \"edit mode\" button at the bottom left of the 3d viewport to switch from object manipulation to vertex editing.",
+  "usage": {
+   "backendName": "ollama",
+   "costSourceDescription": "local model, no per-call price",
+   "inputTokens": 2266,
+   "isCostEstimated": false,
+   "modelIdentifier": "qwen3.6:35b-a3b",
+   "outputTokens": 86,
+   "timeToFirstTextInSeconds": 2.548995018005371,
+   "totalDurationInSeconds": 3.814478039741516
+  },
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 878.56,
+   "hit": false,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 11.802884615384682,
+    "width": 70.87499549388885,
+    "x": 70.87500438348094,
+    "y": 99.14423076923075
+   },
+   "text": "Object Mode"
+  }
+ },
+ {
+  "status": "verification_failed",
+  "captureSource": "screencapturekit",
+  "pointInDisplayPoints": {
+   "x": 621.34,
+   "y": 564.86
+  },
+  "elementLabel": "vertex",
+  "spokenText": "you're trying to pull out a corner of your cube to match the goal shape, but it looks like you might be selecting the whole object instead of just one vertex. go into edit mode by pressing tab, then click on the top-right corner vertex of your cube and try pulling it up with g followed by z.",
+  "usage": {
+   "backendName": "ollama",
+   "costSourceDescription": "local model, no per-call price",
+   "inputTokens": 2266,
+   "isCostEstimated": false,
+   "modelIdentifier": "qwen3.6:35b-a3b",
+   "outputTokens": 78,
+   "timeToFirstTextInSeconds": 0.08227503299713135,
+   "totalDurationInSeconds": 1.1800470352172852
+  },
+  "textVerification": {
+   "distanceToBoxCenterInPoints": 690.42,
+   "hit": false,
+   "occurrencesFound": 1,
+   "ocrBoxInDisplayPoints": {
+    "height": 11.802884615384682,
+    "width": 70.87499549388885,
+    "x": 70.87500438348094,
+    "y": 99.14423076923075
+   },
+   "text": "Object Mode"
+  }
+ }
+]

@@ -46,7 +46,7 @@ final class StuckOfferPillModel: ObservableObject {
 
 @MainActor
 final class StuckOfferPanelManager {
-    static let pillPanelSize = CGSize(width: 272, height: 62)
+    static let pillPanelSize = CGSize(width: 288, height: 62)
 
     private(set) var panel: NSPanel?
     private let pillModel = StuckOfferPillModel()
@@ -142,6 +142,7 @@ struct StuckOfferPillView: View {
 
     private let offerText = "want a hand?"
     private let declineAcknowledgementText = "ok, i'll back off"
+    private static let acknowledgementPillWidth: CGFloat = 134
 
     private var isVisible: Bool {
         pillModel.stage != .hidden
@@ -161,12 +162,19 @@ struct StuckOfferPillView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     ZStack(alignment: .leading) {
                         StuckLetterRevealText(text: offerText, isRevealed: isAsking)
-                        StuckLetterRevealText(text: declineAcknowledgementText, isRevealed: pillModel.stage == .acknowledgingDecline)
+                        // Waits for the offer to clear, or the two lines overlap.
+                        StuckLetterRevealText(
+                            text: declineAcknowledgementText,
+                            isRevealed: pillModel.stage == .acknowledgingDecline,
+                            revealDelayInSeconds: 0.16
+                        )
                     }
 
                     Text(disclosureText)
                         .font(.system(size: 9.5, weight: .regular))
                         .foregroundColor(Color.white.opacity(0.46))
+                        .lineLimit(1)
+                        .fixedSize()
                         .opacity(isAsking ? 1 : 0)
                         .animation(.easeOut(duration: 0.4).delay(isAsking ? 0.42 : 0), value: isAsking)
                 }
@@ -185,7 +193,13 @@ struct StuckOfferPillView: View {
             .padding(.leading, 13)
             .padding(.trailing, 8)
             .padding(.vertical, 9)
-            .frame(width: StuckOfferPanelManager.pillPanelSize.width - 12)
+            // Narrows to fit the short goodbye, so it doesn't sit in an empty box.
+            .frame(
+                width: pillModel.stage == .acknowledgingDecline
+                    ? Self.acknowledgementPillWidth
+                    : StuckOfferPanelManager.pillPanelSize.width - 12,
+                alignment: .leading
+            )
             .background(pillBackground)
             .overlay(alignment: .bottom) { remainingTimeHairline }
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -195,6 +209,7 @@ struct StuckOfferPillView: View {
                     .animation(.easeOut(duration: 0.18), value: pillModel.isPointerInside)
             )
             .shadow(color: DS.Colors.overlayCursorBlue.opacity(pillModel.isPointerInside ? 0.36 : 0.18), radius: 14)
+            .animation(.spring(response: 0.42, dampingFraction: 0.86), value: pillModel.stage)
             .onHover { isPointerInside in
                 pillModel.isPointerInside = isPointerInside
             }
@@ -208,8 +223,8 @@ struct StuckOfferPillView: View {
 
     private var disclosureText: String {
         pillModel.screenshotDestinationName == "this mac"
-            ? "yes takes 1 screenshot, stays on this mac"
-            : "yes sends 1 screenshot to \(pillModel.screenshotDestinationName)"
+            ? "1 screenshot, stays on this mac"
+            : "sends 1 screenshot to \(pillModel.screenshotDestinationName)"
     }
 
     private var pillBackground: some View {
@@ -245,6 +260,8 @@ private struct StuckPillButton: View {
             Text(title)
                 .font(.system(size: 11.5, weight: .semibold))
                 .foregroundColor(isPrimary ? .white : Color.white.opacity(isHovering ? 0.92 : 0.58))
+                .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(
@@ -266,6 +283,7 @@ private struct StuckPillButton: View {
 private struct StuckLetterRevealText: View {
     let text: String
     let isRevealed: Bool
+    var revealDelayInSeconds: Double = 0
 
     private let delayPerLetterInSeconds = 0.022
 
@@ -279,7 +297,7 @@ private struct StuckLetterRevealText: View {
                     .offset(y: isRevealed ? 0 : 4)
                     .animation(
                         isRevealed
-                            ? .easeOut(duration: 0.3).delay(Double(letterIndex) * delayPerLetterInSeconds)
+                            ? .easeOut(duration: 0.3).delay(revealDelayInSeconds + Double(letterIndex) * delayPerLetterInSeconds)
                             : .easeIn(duration: 0.14),
                         value: isRevealed
                     )

@@ -1,0 +1,44 @@
+Classifier, using real CGEvent objects:
+  ok    cmd-z is an undo
+  ok    ctrl-z is an undo
+  ok    shift-cmd-z is a redo
+  ok    a plain z is anonymous
+  ok    a plain a is anonymous
+  ok    cmd-a is anonymous
+  ok    tab is a mode toggle
+  ok    escape is a cancel
+  ok    held undo autorepeat is dropped
+  ok    mouse down alone reports nothing
+  ok    a click reports a tile, and nearby clicks share it
+  ok    a press that travels is a drag
+
+What an event can hold:
+  stored field types: ["(coarseAreaIdentifier: Int)", "(distanceInPoints: Double, coarseAreaIdentifier: Int)", "Double", "Int", "StuckBehaviourEventKind"]
+  ok    an event holds no text or bytes
+
+Memory:
+  ok    memory fills while events arrive (32 items)
+  ok    the receipt accounts for every item in memory (32 of 32)
+  receipt at 29s:
+    1 undo in 0s  [wiped in 115s]
+    11 other key presses, not which keys  [wiped in 92s]
+    6 clicks across 4 screen areas  [wiped in 90s]
+    cursor moved for 14 seconds across 8 screen areas (3763pt)  [wiped in 90s]
+  ok    nothing is wiped before 2 minutes
+  ok    everything is gone after 2 minutes
+  ok    forget now empties memory and the receipt
+
+Offer policy:
+  ok    declining raises the threshold (100.0 to 140.0)
+  ok    four declines put the threshold (384.15999999999985) above the highest possible score (354.0)
+  ok    accepting lowers it again
+  ok    reset returns to the default
+  ok    one reading over the line is not enough
+  ok    two readings in a row make an offer
+  ok    a cooldown follows an offer
+  ok    never mid-action
+  ok    one signal alone never fires
+  ok    stillness and wandering alone never fire
+  ok    never while clicky is already talking
+
+29 passed, 0 failed

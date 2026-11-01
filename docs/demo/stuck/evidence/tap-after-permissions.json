@@ -1,0 +1,17 @@
+{
+  "accessibilityTrusted" : true,
+  "hint" : "keyboard and mouse events are both reaching the tap",
+  "inputMonitoringPreflight" : true,
+  "isReceivingKeyboardEvents" : true,
+  "requestedEventMask" : 4195582,
+  "status" : "ok",
+  "systemReportedTaps" : [
+    {
+      "eventMask" : 4195582,
+      "isEnabled" : true,
+      "isListenOnly" : true
+    }
+  ],
+  "tapInstalled" : true,
+  "tapsLeftAfterStopping" : 0
+}

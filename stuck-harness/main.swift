@@ -540,7 +540,6 @@ func runLiveReplay(seconds: Double) {
                 detector.wipeExpiredMemory(atTime: currentTime)
                 if offerPolicy.shouldOffer(for: detector.assess(atTime: currentTime), atTime: currentTime, isCompanionBusy: false) {
                     offerCount += 1
-                    offerPolicy = StuckOfferPolicy(scoringModel: scoringModel)
                 }
                 Thread.sleep(forTimeInterval: min(0.25, max(0.01, eventTime - currentTime)))
             }

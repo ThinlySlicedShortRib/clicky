@@ -1,5 +1,7 @@
 # Clicky Foundation
 
+Stuck, built on this base, is in `docs/STUCK.md`.
+
 A local base for demo builds. It needs no Cloudflare Worker and no API keys: replies come from a logged-in CLI, speech goes through Apple Speech and `say`, and scripted checks run without a human.
 
 Measurements below were taken on 2026-11-01 on an M5 Pro MacBook with one display (1512x982 points, 3024x1964 pixels), macOS 26.6.2, Xcode 27.2.
@@ -22,6 +24,8 @@ The rule against running `xcodebuild` from a terminal came from unstable signing
 ## Permissions
 
 Clicky had none of these when this was written. Only a human can grant them.
+
+Stuck also uses Input Monitoring. Accessibility covers it too. See `docs/STUCK.md`.
 
 | Permission | Needed for | Where to grant |
 |---|---|---|
@@ -51,6 +55,7 @@ There is one config value: `BrainModel` in `leanring-buddy/Info.plist`. `CLICKY_
 | `claude-sonnet-5-5` (default) | claude CLI with that model. Any `claude-*` ID works. |
 | `codex` | codex CLI with its default model |
 | `codex:<model>` | codex CLI with that model |
+| `ollama:<model>` | local ollama server, so nothing leaves the Mac |
 
 ```bash
 CLICKY_BRAIN_MODEL=codex scripts/build-and-run.sh
@@ -195,7 +200,7 @@ Accuracy needs no extra upscaling: 1280px and 1568px both hit 9 of 9 small icons
 - The default voice is Samantha because no Premium or Enhanced voices are installed. Downloading one in System Settings gets it picked up automatically. `CLICKY_TTS_VOICE` overrides it.
 - `CodexCLIBrain` does not stream, and `--ignore-user-config` means it never uses your codex config.
 - Replies are spoken only after the whole response arrives, as in upstream. Streaming into speech would feel faster, but isn't built.
-- Ollama is not wired up.
+- Ollama is wired up, but its pointing is poor: `docs/STUCK.md` has the numbers.
 - The panel says "Grant all four" and doesn't list Speech Recognition, which is requested on first hotkey press.
 - A harmless `default.profraw` warning prints on exit from debug builds.
 

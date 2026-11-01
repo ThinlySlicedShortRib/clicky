@@ -12,6 +12,7 @@
 //
 
 import AppKit
+import Combine
 import SwiftUI
 
 extension Notification.Name {
@@ -30,6 +31,7 @@ final class MenuBarPanelManager: NSObject {
     private var panel: NSPanel?
     private var clickOutsideMonitor: Any?
     private var dismissPanelObserver: NSObjectProtocol?
+    private var stuckToggleCancellable: AnyCancellable?
 
     private let companionManager: CompanionManager
     private let panelWidth: CGFloat = 320
@@ -47,6 +49,16 @@ final class MenuBarPanelManager: NSObject {
         ) { [weak self] _ in
             self?.hidePanel()
         }
+
+        // The Stuck section changes height when switched on. Refitting is why
+        // this hops a turn: SwiftUI hasn't laid out the new rows yet.
+        stuckToggleCancellable = companionManager.stuckCompanion.$isEnabled
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self, let panel = self.panel, panel.isVisible else { return }
+                self.positionPanelBelowStatusItem()
+            }
     }
 
     deinit {

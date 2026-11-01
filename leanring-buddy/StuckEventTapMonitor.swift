@@ -41,14 +41,14 @@ final class StuckEventTapMonitor {
         eventTap != nil
     }
 
-    /// Whether macOS is really delivering key presses to this tap. Creating a
-    /// tap succeeds without Input Monitoring: the system quietly removes
-    /// keyDown from its mask, so a tap that "worked" could still be blind to
-    /// every undo. Only the system's own list can tell the two cases apart.
+    /// Whether macOS is really delivering to this tap. Creating a tap succeeds
+    /// without Input Monitoring: the system quietly disables it and removes
+    /// keyDown from its mask, so a tap that "worked" could be blind to
+    /// everything. Only the system's own list can tell the two cases apart.
     var isReceivingKeyboardEvents: Bool {
         let keyDownBit = CGEventMask(1) << CGEventType.keyDown.rawValue
         return SystemEventTapReport.tapsOwnedByThisProcess().contains { systemTap in
-            systemTap.eventMask & keyDownBit != 0 && systemTap.isStuckTap
+            systemTap.isStuckTap && systemTap.isEnabled && systemTap.eventMask & keyDownBit != 0
         }
     }
 

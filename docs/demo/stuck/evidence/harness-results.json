@@ -1,0 +1,588 @@
+{
+  "dataIsSynthetic" : true,
+  "declining" : [
+    {
+      "declines" : 0,
+      "offered" : 1460,
+      "threshold" : 100,
+      "total" : 1800
+    },
+    {
+      "declines" : 1,
+      "offered" : 268,
+      "threshold" : 140,
+      "total" : 1800
+    },
+    {
+      "declines" : 2,
+      "offered" : 0,
+      "threshold" : 195.99999999999997,
+      "total" : 1800
+    },
+    {
+      "declines" : 3,
+      "offered" : 0,
+      "threshold" : 274.39999999999992,
+      "total" : 1800
+    },
+    {
+      "declines" : 4,
+      "offered" : 0,
+      "threshold" : 384.15999999999985,
+      "total" : 1800
+    }
+  ],
+  "falseOffersInSimulatedBusyHours" : {
+    "hours" : 200.08768566048747,
+    "offers" : 25
+  },
+  "heldOut" : {
+    "scenarios" : [
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 40.258704780533208,
+        "scenario" : "stuck: undo loop on one object",
+        "traces" : 300,
+        "tracesWithOffer" : 294
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 36.092986862822194,
+        "scenario" : "stuck: reopening a menu without choosing",
+        "traces" : 300,
+        "tracesWithOffer" : 285
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 60.779302757855717,
+        "scenario" : "stuck: tutorial tab and back, undoing",
+        "traces" : 300,
+        "tracesWithOffer" : 280
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 33.842116256592476,
+        "scenario" : "stuck: flipping a mode back and forth",
+        "traces" : 300,
+        "tracesWithOffer" : 137
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 43.230582344238272,
+        "scenario" : "stuck: starting a tool and cancelling it",
+        "traces" : 300,
+        "tracesWithOffer" : 269
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 41.294288540344589,
+        "scenario" : "stuck: clicking one control over and over",
+        "traces" : 300,
+        "tracesWithOffer" : 195
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : true,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard stuck: two undos, circling, then frozen",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : true,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard stuck: silent, staring at the screen",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: coding, occasional undo",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: rewriting a paragraph",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: painter, undoing every other stroke",
+        "traces" : 300,
+        "tracesWithOffer" : 1
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: modelling in Blender, going well",
+        "traces" : 300,
+        "tracesWithOffer" : 3
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: cutting video in an editor",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: holding undo to rewind",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: reading documentation",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: watching a video",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: filling in a form",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: copying from a browser into a doc",
+        "traces" : 300,
+        "tracesWithOffer" : 1
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: spreadsheet, moving between two spots",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: walked away from the desk",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: messaging, jumping between apps",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: comparing a tweak with undo and redo",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: two undos, then it worked",
+        "traces" : 300,
+        "tracesWithOffer" : 1
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: vim, escape after every edit",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: stepping through a wizard with Next",
+        "traces" : 300,
+        "tracesWithOffer" : 0
+      }
+    ],
+    "summary" : {
+      "falseNegatives" : 940,
+      "falsePositives" : 6,
+      "precision" : 0.99590723055934516,
+      "recall" : 0.60833333333333328,
+      "trueNegatives" : 5094,
+      "truePositives" : 1460
+    }
+  },
+  "heldOutRecallExcludingHardScenarios" : 0.81111111111111112,
+  "thresholdSweep" : [
+    {
+      "falseNegatives" : 329,
+      "falsePositives" : 1904,
+      "precision" : 0.52100628930817605,
+      "recall" : 0.86291666666666667,
+      "threshold" : 40,
+      "truePositives" : 2071
+    },
+    {
+      "falseNegatives" : 370,
+      "falsePositives" : 1159,
+      "precision" : 0.63656318595170902,
+      "recall" : 0.84583333333333333,
+      "threshold" : 60,
+      "truePositives" : 2030
+    },
+    {
+      "falseNegatives" : 703,
+      "falsePositives" : 201,
+      "precision" : 0.89409905163329817,
+      "recall" : 0.70708333333333329,
+      "threshold" : 80,
+      "truePositives" : 1697
+    },
+    {
+      "falseNegatives" : 940,
+      "falsePositives" : 6,
+      "precision" : 0.99590723055934516,
+      "recall" : 0.60833333333333328,
+      "threshold" : 100,
+      "truePositives" : 1460
+    },
+    {
+      "falseNegatives" : 1700,
+      "falsePositives" : 0,
+      "precision" : 1,
+      "recall" : 0.29166666666666669,
+      "threshold" : 120,
+      "truePositives" : 700
+    },
+    {
+      "falseNegatives" : 2132,
+      "falsePositives" : 0,
+      "precision" : 1,
+      "recall" : 0.11166666666666666,
+      "threshold" : 140,
+      "truePositives" : 268
+    },
+    {
+      "falseNegatives" : 2336,
+      "falsePositives" : 0,
+      "precision" : 1,
+      "recall" : 0.026666666666666668,
+      "threshold" : 160,
+      "truePositives" : 64
+    },
+    {
+      "falseNegatives" : 2399,
+      "falsePositives" : 0,
+      "precision" : 1,
+      "recall" : 0.00041666666666666669,
+      "threshold" : 180,
+      "truePositives" : 1
+    },
+    {
+      "falseNegatives" : 2400,
+      "falsePositives" : 0,
+      "precision" : 1,
+      "recall" : 0,
+      "threshold" : 200,
+      "truePositives" : 0
+    }
+  ],
+  "tuning" : {
+    "scenarios" : [
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 38.805304274590611,
+        "scenario" : "stuck: undo loop on one object",
+        "traces" : 100,
+        "tracesWithOffer" : 100
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 35.651552882381189,
+        "scenario" : "stuck: reopening a menu without choosing",
+        "traces" : 100,
+        "tracesWithOffer" : 94
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 60.272018058262333,
+        "scenario" : "stuck: tutorial tab and back, undoing",
+        "traces" : 100,
+        "tracesWithOffer" : 98
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 32.436889571239995,
+        "scenario" : "stuck: flipping a mode back and forth",
+        "traces" : 100,
+        "tracesWithOffer" : 45
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 44.759979081626675,
+        "scenario" : "stuck: starting a tool and cancelling it",
+        "traces" : 100,
+        "tracesWithOffer" : 90
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : true,
+        "medianSecondsToOffer" : 40.284442314168778,
+        "scenario" : "stuck: clicking one control over and over",
+        "traces" : 100,
+        "tracesWithOffer" : 62
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : true,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard stuck: two undos, circling, then frozen",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : true,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard stuck: silent, staring at the screen",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: coding, occasional undo",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: rewriting a paragraph",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: painter, undoing every other stroke",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: modelling in Blender, going well",
+        "traces" : 100,
+        "tracesWithOffer" : 3
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: cutting video in an editor",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: holding undo to rewind",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: reading documentation",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: watching a video",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: filling in a form",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: copying from a browser into a doc",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: spreadsheet, moving between two spots",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: walked away from the desk",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: messaging, jumping between apps",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: comparing a tweak with undo and redo",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: two undos, then it worked",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : true,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "hard busy: vim, escape after every edit",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      },
+      {
+        "falseOffersBeforeOnset" : 0,
+        "isDeliberatelyHard" : false,
+        "isStuck" : false,
+        "medianSecondsToOffer" : null,
+        "scenario" : "busy: stepping through a wizard with Next",
+        "traces" : 100,
+        "tracesWithOffer" : 0
+      }
+    ],
+    "summary" : {
+      "falseNegatives" : 311,
+      "falsePositives" : 3,
+      "precision" : 0.99390243902439024,
+      "recall" : 0.61124999999999996,
+      "trueNegatives" : 1697,
+      "truePositives" : 489
+    }
+  }
+}

@@ -179,7 +179,7 @@ struct CompanionPanelView: View {
                     .foregroundColor(DS.Colors.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Nothing runs in the background. Clicky will only take a screenshot when you press the hot key. So, you can give that permission in peace. If you are still sus, eh, I can't do much there champ.")
+                Text("Nothing runs in the background unless you turn on \"notice when i'm stuck\". Clicky will only take a screenshot when you press the hot key, or say yes to its offer. So, you can give that permission in peace. If you are still sus, eh, I can't do much there champ.")
                     .font(.system(size: 11))
                     .foregroundColor(Color(red: 0.9, green: 0.4, blue: 0.4))
                     .fixedSize(horizontal: false, vertical: true)
@@ -357,7 +357,7 @@ struct CompanionPanelView: View {
                         .foregroundColor(DS.Colors.textSecondary)
 
                     Text(isGranted
-                         ? "Only takes a screenshot when you use the hotkey"
+                         ? "Only takes a screenshot on the hotkey, or when you say yes"
                          : "Quit and reopen after granting")
                         .font(.system(size: 10))
                         .foregroundColor(DS.Colors.textTertiary)
@@ -810,7 +810,7 @@ private struct StuckPanelSection: View {
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 if stuckCompanion.watchingStatus == .needsPermission
-                    || stuckCompanion.watchingStatus == .watchingMouseOnly {
+                    || stuckCompanion.watchingStatus == .tapWithheldByMacOS {
                     needsPermissionNote
                 }
 
@@ -868,7 +868,7 @@ private struct StuckPanelSection: View {
             }
 
             Text(stuckCompanion.usesLocalBrain
-                 ? "your screenshot stays here. slower, and it points less well."
+                 ? "your screenshot stays here. the first answer is slow, and it often points at the wrong thing."
                  : "saying yes sends one screenshot to the model provider.")
                 .font(.system(size: 10))
                 .foregroundColor(DS.Colors.textTertiary)

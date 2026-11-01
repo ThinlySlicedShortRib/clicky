@@ -67,7 +67,7 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
         // For scripts/demo-stuck.sh and scripts/prove-privacy.sh, which print
         // the consent sentence first. Neither flag can inject an event.
         if CommandLine.arguments.contains("--enable-stuck") {
-            companionManager.stuckCompanion.setEnabled(true)
+            companionManager.stuckCompanion.enableForThisLaunch()
         }
         if CommandLine.arguments.contains("--show-stuck-receipt") {
             companionManager.stuckReceiptPanelManager.show()

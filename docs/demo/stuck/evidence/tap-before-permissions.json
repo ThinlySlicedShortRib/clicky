@@ -1,0 +1,17 @@
+{
+  "accessibilityTrusted" : false,
+  "hint" : "the tap can see the mouse but macOS is withholding key presses, so undos go unseen. Grant Clicky Input Monitoring in System Settings > Privacy & Security, then quit and relaunch it.",
+  "inputMonitoringPreflight" : false,
+  "isReceivingKeyboardEvents" : false,
+  "requestedEventMask" : 4195582,
+  "status" : "permission_missing",
+  "systemReportedTaps" : [
+    {
+      "eventMask" : 4194558,
+      "isEnabled" : false,
+      "isListenOnly" : true
+    }
+  ],
+  "tapInstalled" : true,
+  "tapsLeftAfterStopping" : 0
+}

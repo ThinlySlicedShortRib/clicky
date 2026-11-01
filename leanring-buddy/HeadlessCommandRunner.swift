@@ -19,6 +19,9 @@ import Vision
 
 // MARK: - Commands
 
+/// A hung check must fail rather than leave a script waiting forever.
+private let wholeCommandLimitInSeconds: TimeInterval = 300
+
 struct HeadlessPointOptions {
     var userPrompt = "where is the most important thing on my screen? point at it."
     var modelValue = BrainConfiguration.configuredModelValue
@@ -64,6 +67,8 @@ enum HeadlessCommand {
     case stuckTapCheck
     case stuckOffer(HeadlessStuckOfferOptions)
     case stuckReceiptRender(outputPath: String, isEmpty: Bool)
+    case stuckShadow(seconds: Double)
+    case stuckConsentRender(outputPath: String)
 
     /// Returns nil when no headless flag is present and the app should launch
     /// normally. Bad arguments exit immediately so a script can't mistake a
@@ -181,6 +186,17 @@ enum HeadlessCommand {
             return .stuckOffer(options)
         }
 
+        if let consentOutputPath = value(after: "--headless-stuck-consent-render") {
+            return .stuckConsentRender(outputPath: consentOutputPath)
+        }
+
+        if let rawShadowSeconds = value(after: "--headless-stuck-shadow") {
+            guard let shadowSeconds = Double(rawShadowSeconds), shadowSeconds > 0, shadowSeconds < wholeCommandLimitInSeconds else {
+                exitWithUsageError("--headless-stuck-shadow expects seconds below \(wholeCommandLimitInSeconds), got \(rawShadowSeconds)")
+            }
+            return .stuckShadow(seconds: shadowSeconds)
+        }
+
         if let receiptOutputPath = value(after: "--headless-stuck-receipt-render") {
             return .stuckReceiptRender(outputPath: receiptOutputPath, isEmpty: arguments.contains("--empty"))
         }
@@ -245,7 +261,7 @@ enum HeadlessOutput {
 struct HeadlessCommandRunner {
     let companionManager: CompanionManager
 
-    private static let wholeCommandTimeoutInSeconds: TimeInterval = 300
+    private static let wholeCommandTimeoutInSeconds: TimeInterval = wholeCommandLimitInSeconds
     private static let speechAuthorizationPromptWaitInSeconds: TimeInterval = 20
 
     func run(_ command: HeadlessCommand) async {
@@ -276,6 +292,10 @@ struct HeadlessCommandRunner {
             await runStuckOffer(options)
         case .stuckReceiptRender(let outputPath, let isEmpty):
             await runStuckReceiptRender(outputPath: outputPath, isEmpty: isEmpty)
+        case .stuckShadow(let seconds):
+            await runStuckShadow(seconds: seconds)
+        case .stuckConsentRender(let outputPath):
+            await runStuckConsentRender(outputPath: outputPath)
         }
     }
 

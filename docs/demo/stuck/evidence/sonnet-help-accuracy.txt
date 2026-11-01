@@ -1,0 +1,26 @@
+Blender content on display: {'x': 0, 'y': 65, 'width': 1512, 'height': 860}
+ok                   first_text=3.537203073501587 total=5.180937051773071 point={'x': 103.95, 'y': 103.99} label=object mode dropdown
+    you're in object mode, which can only move the whole cube, so you can't pull a single corner out. Press tab with your mouse over the viewport to switch to edit mode, or pick it from this mode dropdown, then click one corner and drag it out with g.
+ok                   first_text=2.9488930702209473 total=4.502969026565552 point={'x': 103.95, 'y': 103.99} label=mode dropdown
+    you're in object mode, which moves the whole cube, so undo keeps undoing your attempts. switch to edit mode by hovering over the cube and pressing tab, or use this dropdown, then you can grab a single corner and pull it out like the goal.
+ok                   first_text=3.734637975692749 total=5.178830981254578 point={'x': 102.77, 'y': 103.99} label=object mode dropdown
+    you're still in object mode, which moves the whole cube instead of reshaping it, so the corner can't be pulled out. hover over the viewport and press tab to switch into edit mode, or use this mode dropdown, then you can pick a single corner and drag it out.
+ok                   first_text=3.1272109746932983 total=4.687456011772156 point={'x': 103.95, 'y': 103.99} label=mode dropdown
+    you're in object mode, which only moves the whole cube, so the corner never comes loose by itself. switch to edit mode with that mode dropdown, or hover over the cube and press tab, then click a single corner and drag it out with the grab tool.
+ok                   first_text=3.9775240421295166 total=5.431802988052368 point={'x': 103.95, 'y': 103.99} label=mode dropdown
+    you're in object mode, so anything you grab moves the whole cube instead of one corner. switch to edit mode by hovering over the cube and pressing tab, or use this mode dropdown, then you can click a single corner and drag it out.
+ok                   first_text=2.7738020420074463 total=4.206526041030884 point={'x': 103.95, 'y': 103.99} label=object mode dropdown
+    you're in object mode, so anything you drag moves the whole cube instead of one corner. switch into edit mode by hovering over the viewport and pressing tab, or use this mode dropdown, then you can pick a single corner vertex and pull it out.
+ok                   first_text=3.665347933769226 total=5.573109984397888 point={'x': 103.95, 'y': 103.99} label=mode dropdown
+    you're still in object mode, which moves the whole cube, so grabbing a single corner isn't working. hover over the viewport and press tab to switch into edit mode, or use the mode dropdown up top left. from there you can pick one corner vertex and drag it out toward the goal shape.
+ok                   first_text=3.3092089891433716 total=4.978981971740723 point={'x': 106.31, 'y': 103.99} label=mode dropdown
+    you're in object mode, so anything you pull moves the whole cube instead of just one corner. switch to edit mode by hitting tab with your mouse over the viewport, or use this mode dropdown, then you can pick a single corner vertex and drag it out.
+ok                   first_text=4.04646098613739 total=5.6409289836883545 point={'x': 102.77, 'y': 103.99} label=object mode dropdown
+    you're in object mode, so you can only move the whole cube, and the goal needs one corner pulled out, which means editing its vertices. Hover over the viewport and press tab, or use this mode dropdown, to switch to edit mode. Then pick a single corner and press g to drag it out.
+ok                   first_text=3.902590036392212 total=5.284292936325073 point={'x': 102.77, 'y': 103.99} label=mode dropdown
+    you're in object mode, so everything you grab moves the whole cube instead of one corner. Switch to edit mode by pressing tab with your mouse over the viewport, or use this dropdown, and then you can pick a single corner to pull out.
+
+10 of 10 pointed at 'Object Mode'
+first text: median 3.60s, min 2.77s, max 4.05s
+total: median 5.18s, min 4.21s, max 5.64s
+capture source: fixture

@@ -1,0 +1,19 @@
+{
+  "eventCountsByCategory" : {
+    "anonymousKeyPress" : 144,
+    "click" : 6,
+    "drag" : 2,
+    "pointerMovement" : 1215,
+    "scroll" : 1000
+  },
+  "inputIsUnlabelled" : true,
+  "isReceivingKeyboardEvents" : true,
+  "offersThatWouldHaveFired" : 0,
+  "peakScore" : 30,
+  "scripted" : false,
+  "seconds" : 280,
+  "secondsEachSignalWasActive" : {
+    "stillness after activity" : 35
+  },
+  "status" : "ok"
+}

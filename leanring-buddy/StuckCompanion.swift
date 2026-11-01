@@ -21,8 +21,9 @@ final class StuckCompanion: ObservableObject {
         case off
         /// macOS refused the tap outright.
         case needsPermission
-        /// The tap runs but macOS withholds key presses, so undos go unseen.
-        case watchingMouseOnly
+        /// The tap installs without permission, but macOS disables it and
+        /// removes key presses from its mask, so nothing arrives.
+        case tapWithheldByMacOS
         case watching
     }
 
@@ -64,6 +65,7 @@ final class StuckCompanion: ObservableObject {
     ]
 
     private static let offerVisibleDurationInSeconds: Double = 7
+    private static let minimumSecondsBetweenTapRebuilds: Double = 30
     private static let declineAcknowledgementDurationInSeconds: Double = 1.1
 
     @Published private(set) var isEnabled: Bool
@@ -98,6 +100,7 @@ final class StuckCompanion: ObservableObject {
     private var isBrowserFrontmost = false
     private var bytesWrittenWhenEnabled: UInt64?
     private var offerExpiryTask: Task<Void, Never>?
+    private var lastTapRebuildTime: Double = -.infinity
     private var offerPlacement: StuckOfferPlacement.Placement?
 
     private weak var companionManager: CompanionManager?
@@ -146,6 +149,13 @@ final class StuckCompanion: ObservableObject {
         } else {
             stopWatching()
         }
+    }
+
+    /// For the demo and proof scripts, which print the consent sentence first.
+    /// Doesn't save anything, so the user's own choice survives the script.
+    func enableForThisLaunch() {
+        isEnabled = true
+        startWatching()
     }
 
     func setUsesLocalBrain(_ shouldUseLocalBrain: Bool) {
@@ -241,11 +251,17 @@ final class StuckCompanion: ObservableObject {
     }
 
     /// macOS doesn't upgrade an existing tap when a permission arrives, so a
-    /// mouse-only tap is rebuilt as soon as keyboard access might be there.
+    /// withheld tap is rebuilt as soon as keyboard access might be there.
     private func refreshTapStatus() {
         let hasKeyboardPermission = CGPreflightListenEventAccess() || AXIsProcessTrusted()
+        let currentTime = ProcessInfo.processInfo.systemUptime
 
-        if eventTapMonitor.isRunning && !eventTapMonitor.isReceivingKeyboardEvents && hasKeyboardPermission {
+        // Throttled, so a grant that never takes effect can't rebuild every second.
+        if eventTapMonitor.isRunning
+            && hasKeyboardPermission
+            && !eventTapMonitor.isReceivingKeyboardEvents
+            && currentTime - lastTapRebuildTime >= Self.minimumSecondsBetweenTapRebuilds {
+            lastTapRebuildTime = currentTime
             eventTapMonitor.stop()
         }
 
@@ -253,7 +269,7 @@ final class StuckCompanion: ObservableObject {
             watchingStatus = .needsPermission
             return
         }
-        watchingStatus = eventTapMonitor.isReceivingKeyboardEvents ? .watching : .watchingMouseOnly
+        watchingStatus = eventTapMonitor.isReceivingKeyboardEvents ? .watching : .tapWithheldByMacOS
     }
 
     private func refreshProcessMeasurements() {
@@ -472,12 +488,16 @@ final class StuckCompanion: ObservableObject {
         let status: [String: Any] = [
             "processIdentifier": Int(getpid()),
             "isEnabled": isEnabled,
-            "isWatching": watchingStatus == .watching || watchingStatus == .watchingMouseOnly,
-            "isReceivingKeyboardEvents": watchingStatus == .watching,
+            "isWatching": watchingStatus == .watching,
+            "isReceivingKeyboardEvents": eventTapMonitor.isReceivingKeyboardEvents,
             "processedEventCount": processedEventCount,
             "retainedItemCount": detector.retainedItemCount,
             "screenshotsTakenCount": screenshotsTakenCount,
             "stuckTapCount": stuckTaps.count,
+            "stuckTapIsEnabled": stuckTaps.allSatisfy(\.isEnabled),
+            // The machine's own idle clock, so a proof run can tell "nobody
+            // touched anything" apart from "input happened and the tap missed it".
+            "secondsSinceLastPointerMoveOnThisMac": CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .mouseMoved),
             "stuckTapIsListenOnly": stuckTaps.allSatisfy(\.isListenOnly)
         ]
 

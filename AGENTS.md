@@ -7,6 +7,8 @@
 
 macOS menu bar companion app. Lives entirely in the macOS status bar (no dock icon, no main window). Clicking the menu bar icon opens a custom floating panel with companion voice controls. Uses push-to-talk (ctrl+option) to capture voice input, transcribes it via Apple Speech, and sends the transcript + a screenshot of the user's screen to a `Brain`, which by default shells out to the logged-in `claude` CLI. Replies are spoken via `say`. A blue cursor overlay can fly to and point at UI elements Claude references on any connected monitor.
 
+**Stuck** lives on this branch: on-device detection of being stuck, a quiet offer, a privacy receipt, and one screenshot only on yes. See `docs/STUCK.md`.
+
 **This fork is the foundation for demo builds. Read `docs/FOUNDATION.md` first**: it covers building, swapping models, headless checks, measured latency, and what is and isn't verified. No keys or Cloudflare Worker are needed; the upstream Worker sections below are kept for reference only.
 
 ## Architecture
@@ -21,6 +23,7 @@ macOS menu bar companion app. Lives entirely in the macOS status bar (no dock ic
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
+- **Stuck**: Off by default. A second listen-only tap, separate from the hotkey's, feeds a pure Foundation detector that holds counts for 2 minutes. Its only route to a screenshot is `StuckCompanion.acceptOffer()`. Detection sources must never gain capture, network, file or logging calls: `scripts/prove-privacy.sh` checks for them.
 - **Analytics**: None. `ClickyAnalytics.swift` is a no-op seam; PostHog was removed
 
 ### API Proxy (Cloudflare Worker, unused here)
@@ -53,10 +56,10 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | File | Lines | Purpose |
 |------|-------|---------|
 | `leanring_buddyApp.swift` | ~89 | Menu bar app entry point. Uses `@NSApplicationDelegateAdaptor` with `CompanionAppDelegate` which creates `MenuBarPanelManager` and starts `CompanionManager`. No main window — the app lives entirely in the status bar. |
-| `CompanionManager.swift` | ~1057 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
+| `CompanionManager.swift` | ~1200 | Central state machine. Owns dictation, shortcut monitoring, screen capture, Claude API, ElevenLabs TTS, and overlay management. Tracks voice state (idle/listening/processing/responding), conversation history, model selection, and cursor visibility. Coordinates the full push-to-talk → screenshot → Claude → TTS → pointing pipeline. |
 | `MenuBarPanelManager.swift` | ~243 | NSStatusItem + custom NSPanel lifecycle. Creates the menu bar icon, manages the floating companion panel (show/hide/position), installs click-outside-to-dismiss monitor. |
-| `CompanionPanelView.swift` | ~761 | SwiftUI panel content for the menu bar dropdown. Shows companion status, push-to-talk instructions, model picker (Sonnet/Opus), permissions UI, DM feedback button, and quit button. Dark aesthetic using `DS` design system. |
-| `OverlayWindow.swift` | ~881 | Full-screen transparent overlay hosting the blue cursor, response text, waveform, and spinner. Handles cursor animation, element pointing with bezier arcs, multi-monitor coordinate mapping, and fade-out transitions. |
+| `CompanionPanelView.swift` | ~880 | SwiftUI panel content for the menu bar dropdown. Shows companion status, push-to-talk instructions, model picker (Sonnet/Opus), permissions UI, DM feedback button, and quit button. Dark aesthetic using `DS` design system. |
+| `OverlayWindow.swift` | ~1030 | Full-screen transparent overlay hosting the blue cursor, response text, waveform, and spinner. Handles cursor animation, element pointing with bezier arcs, multi-monitor coordinate mapping, and fade-out transitions. |
 | `CompanionResponseOverlay.swift` | ~217 | SwiftUI view for the response text bubble and waveform displayed next to the cursor in the overlay. |
 | `CompanionScreenCaptureUtility.swift` | ~132 | Multi-monitor screenshot capture using ScreenCaptureKit. Returns labeled image data for each connected display. |
 | `BuddyDictationManager.swift` | ~866 | Push-to-talk voice pipeline. Handles microphone capture via `AVAudioEngine`, provider-aware permission checks, keyboard/button dictation sessions, transcript finalization, shortcut parsing, contextual keyterms, and live audio-level reporting for waveform feedback. |
@@ -70,7 +73,17 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `CLIBrains.swift` | ~550 | `ClaudeCLIBrain` and `CodexCLIBrain`, plus the subprocess runner with streaming stdout, cancellation, and timeouts. |
 | `SayTTSClient.swift` | ~155 | `CompanionTextToSpeechClient` seam and the `say`-based client. Picks the best installed English voice. Interruptible. |
 | `ScreenshotCoordinateMapper.swift` | ~100 | Single source of truth for mapping screenshot pixels to display points and global AppKit coordinates, and for picking the target screen. |
-| `HeadlessCommandRunner.swift` | ~1040 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `HeadlessCommandRunner.swift` | ~1090 | `--headless-*` entry points: permissions report, self-test, capture-to-POINT check with OCR ground truth, overlay flight, speech, transcription. Run through `scripts/headless.sh`. |
+| `StuckDetector.swift` | ~790 | Pure Foundation. The events, the scoring model, the receipt and the offer policy. Also compiled by `stuck-harness/`. |
+| `StuckEventClassifier.swift` | ~115 | Turns a raw event into a category and discards the key code. CoreGraphics only. |
+| `StuckEventTapMonitor.swift` | ~170 | The listen-only tap, and the system's own report on whether it really works. |
+| `StuckCompanion.swift` | ~560 | Runs Stuck: readings, the offer's phases, learning, and the status reply for the proof. |
+| `StuckOfferChoreography.swift` | ~160 | The drift path and offer placement, as pure functions of time. |
+| `StuckOfferViews.swift` | ~430 | The non-activating pill panel and the capture flash. |
+| `StuckReceiptView.swift` | ~470 | The privacy receipt and its floating panel. |
+| `StuckProcessProbe.swift` | ~75 | Sockets and bytes written, from the kernel, for the receipt. |
+| `StuckHeadlessChecks.swift` | ~600 | `--headless-stuck-*` commands and the frame recorder. |
+| `OllamaBrain.swift` | ~140 | A Brain that talks only to the local ollama server. |
 | `ClaudeAPI.swift` | ~291 | Unused here. Claude vision API client with streaming (SSE) and non-streaming modes. |
 | `OpenAIAPI.swift` | ~142 | OpenAI GPT vision API client. |
 | `ElevenLabsTTSClient.swift` | ~81 | Unused here, but conforms to `CompanionTextToSpeechClient`. Sends text to the Worker proxy, plays back audio via `AVAudioPlayer`. |
@@ -87,12 +100,17 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 scripts/build-and-run.sh               # build, sign, relaunch
 scripts/build-and-run.sh --build-only  # build and sign only
 scripts/headless.sh --headless-self-test
+scripts/stuck-harness.sh checks        # Stuck's replay harness, no app needed
+scripts/demo-stuck.sh                  # preflight, Blender, Stuck on
+scripts/prove-privacy.sh               # 0 sockets, 0 files, measured from outside
 
 # Known non-blocking warnings: Swift 6 concurrency warnings,
 # deprecated onChange warning in OverlayWindow.swift. Do NOT attempt to fix these.
 ```
 
 Build through `scripts/build-and-run.sh`. It signs with the stable `Apple Development` identity, which keeps TCC (Transparency, Consent, and Control) permissions across rebuilds. Do not change the identity or bundle ID, since either one resets every grant.
+
+`CLICKY_DERIVED_DATA_PATH` overrides the build location, so parallel worktrees don't collide.
 
 Run headless commands through `scripts/headless.sh`, not by executing the binary, so macOS applies Clicky's permissions rather than the shell's.
 
@@ -150,6 +168,8 @@ IMPORTANT: Follow these naming rules strictly. Clarity is the top priority.
 - Do not try to fix the known non-blocking warnings (Swift 6 concurrency, deprecated onChange)
 - Do not rename the project directory or scheme (the "leanring" typo is intentional/legacy)
 - Do not sign with anything other than the identity in `scripts/build-and-run.sh` — it invalidates TCC permissions
+- Do not put Stuck's traces in the app target, or log or persist behaviour events. The privacy claims depend on both.
+- Do not run a real capture against a cloud model in a check while someone may be using the Mac. Use `--image-only` or an ollama model.
 
 ## Git Workflow
 

@@ -1,0 +1,44 @@
+{
+  "answer" : "yes",
+  "clickyActivatedDuringRun" : false,
+  "failureMessage" : null,
+  "focusSafety" : {
+    "clickyIsActiveApplication" : false,
+    "frontmostApplicationDuringOffer" : "com.t3tools.t3code",
+    "frontmostApplicationUnchanged" : true,
+    "panelCanBecomeKey" : false,
+    "panelCanBecomeMain" : false,
+    "panelFrameAppKit" : {
+      "height" : 62,
+      "width" : 288,
+      "x" : 545,
+      "y" : 196
+    },
+    "panelIsKeyWindow" : false,
+    "panelIsNonActivating" : true,
+    "panelReceivesClicks" : true
+  },
+  "frameCount" : 553,
+  "frontmostApplicationBefore" : "com.t3tools.t3code",
+  "retainedItemsAfterAnswer" : 0,
+  "screenshotsTaken" : 1,
+  "scripted" : true,
+  "secondsFromOfferToPillAppearing" : 1.8802779912948608,
+  "secondsUntilOfferFinished" : 22.289620995521545,
+  "status" : "ok",
+  "thresholdMultiplierAfter" : 1,
+  "thresholdMultiplierBefore" : 1,
+  "usage" : {
+    "backendName" : "claude CLI",
+    "cacheCreationInputTokens" : 0,
+    "cacheReadInputTokens" : 3547,
+    "costInUSD" : 0.0041218000000000001,
+    "costSourceDescription" : "claude CLI total_cost_usd: list-price estimate, not a billed amount",
+    "inputTokens" : 2,
+    "isCostEstimated" : true,
+    "modelIdentifier" : "claude-sonnet-5-5",
+    "outputTokens" : 351,
+    "timeToFirstTextInSeconds" : 4.1260930299758911,
+    "totalDurationInSeconds" : 5.6517859697341919
+  }
+}

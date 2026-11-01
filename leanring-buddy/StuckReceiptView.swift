@@ -9,6 +9,7 @@
 //
 
 import AppKit
+import Combine
 import SwiftUI
 
 // MARK: - Panel
@@ -18,6 +19,8 @@ import SwiftUI
 final class StuckReceiptPanelManager {
     private var panel: NSPanel?
     private unowned let stuckCompanion: StuckCompanion
+
+    private var contentChangeCancellable: AnyCancellable?
 
     private let panelWidth: CGFloat = 318
 
@@ -56,10 +59,34 @@ final class StuckReceiptPanelManager {
         }
 
         receiptPanel.orderFrontRegardless()
+
+        // Lines come and go as memory changes, so the paper has to follow.
+        contentChangeCancellable = stuckCompanion.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.fitPanelToContent()
+            }
     }
 
     func hide() {
+        contentChangeCancellable = nil
         panel?.orderOut(nil)
+    }
+
+    /// Keeps the top edge still, so it reads as paper feeding out of the top.
+    private func fitPanelToContent() {
+        guard let panel, let fittingHeight = panel.contentView?.fittingSize.height,
+              abs(fittingHeight - panel.frame.height) >= 1 else { return }
+
+        panel.setFrame(
+            NSRect(
+                x: panel.frame.minX,
+                y: panel.frame.maxY - fittingHeight,
+                width: panelWidth,
+                height: fittingHeight
+            ),
+            display: true
+        )
     }
 
     private func makePanel() -> NSPanel {
@@ -171,7 +198,7 @@ struct StuckReceiptView: View {
     private var statusColor: Color {
         switch stuckCompanion.watchingStatus {
         case .watching: return ReceiptPalette.reassuringGreen
-        case .watchingMouseOnly, .needsPermission: return ReceiptPalette.warningRed
+        case .tapWithheldByMacOS, .needsPermission: return ReceiptPalette.warningRed
         case .off: return ReceiptPalette.faintInk
         }
     }
@@ -179,7 +206,7 @@ struct StuckReceiptView: View {
     private var statusText: String {
         switch stuckCompanion.watchingStatus {
         case .watching: return "noticing timing, nothing else"
-        case .watchingMouseOnly: return "mouse only, can't see undos yet"
+        case .tapWithheldByMacOS: return "can't see undos yet, needs input monitoring"
         case .needsPermission: return "off until input monitoring is granted"
         case .off: return "off. not listening to anything."
         }
