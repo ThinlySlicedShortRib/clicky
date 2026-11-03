@@ -1,3 +1,5 @@
+> **This fork:** see [docs/JOURNEY.md](docs/JOURNEY.md) for what's been tried and where the work is heading.
+
 ## Get HeyClicky for Mac and Windows
 
 The official app is **[HeyClicky](https://www.heyclicky.com/)**, an AI buddy for Mac and Windows, made by me and the team.

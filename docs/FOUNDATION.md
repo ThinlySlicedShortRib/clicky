@@ -2,6 +2,8 @@
 
 A local base for demo builds. It needs no Cloudflare Worker and no API keys: replies come from a logged-in CLI, speech goes through Apple Speech and `say`, and scripted checks run without a human.
 
+For what came after this foundation and where the fork is heading, see [JOURNEY.md](JOURNEY.md).
+
 Measurements below were taken on 2026-11-01 on an M5 Pro MacBook with one display (1512x982 points, 3024x1964 pixels), macOS 26.6.2, Xcode 27.2.
 
 ## Build and run
